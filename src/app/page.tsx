@@ -8,14 +8,14 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 
 // --- External Library Type Definitions (for PDF download) ---
 interface JsPDFInstance {
-  addImage: (data: string, format: string, x: number, y: number, w: number, h: number) => void;
-  save: (filename: string) => void;
+    addImage: (data: string, format: string, x: number, y: number, w: number, h: number) => void;
+    save: (filename: string) => void;
 }
 
 declare global {
-  interface Window {
-    jsPDF: new (orientation: string, unit: string, format: string) => JsPDFInstance;
-  }
+    interface Window {
+        jsPDF: new (orientation: string, unit: string, format: string) => JsPDFInstance;
+    }
 }
 
 // --- CONSTANTS & CONFIGURATION ---
@@ -35,18 +35,18 @@ const PLACEHOLDER_LOGO_URL = "https://placehold.co/80x80/ffffff/5c4b51?text=Logo
 type FieldType = 'mandatory' | 'custom';
 
 interface BiodataField {
-  id: string;
-  label: string;
-  value: string;
-  type: FieldType;
+    id: string;
+    label: string;
+    value: string;
+    type: FieldType;
 }
 
 interface Template {
-  id: string;
-  name: string;
-  bgImageUrl: string;
-  font: string;
-  primaryColor: string;
+    id: string;
+    name: string;
+    bgImageUrl: string;
+    font: string;
+    primaryColor: string;
 }
 
 interface ImageState {
@@ -57,20 +57,20 @@ interface ImageState {
 // --- INITIAL DATA ---
 
 const templates: Template[] = [
-  {
-    id: 'elegant',
-    name: 'Elegant Floral',
-    bgImageUrl: TEMPLATE_BACKGROUND_IMAGE,
-    font: 'serif',
-    primaryColor: '#8c6e6e', // Deep Mauve
-  },
-  {
-    id: 'modern',
-    name: 'Modern Geometric',
-    bgImageUrl: TEMPLATE_BACKGROUND_IMAGE_2,
-    font: 'sans-serif',
-    primaryColor: '#6e8c8c', // Slate Teal
-  },
+    {
+        id: 'elegant',
+        name: 'Elegant Floral',
+        bgImageUrl: TEMPLATE_BACKGROUND_IMAGE,
+        font: 'serif',
+        primaryColor: '#8c6e6e', // Deep Mauve
+    },
+    {
+        id: 'modern',
+        name: 'Modern Geometric',
+        bgImageUrl: TEMPLATE_BACKGROUND_IMAGE_2,
+        font: 'sans-serif',
+        primaryColor: '#6e8c8c', // Slate Teal
+    },
 ];
 
 const initialFields: BiodataField[] = [
@@ -82,16 +82,16 @@ const initialFields: BiodataField[] = [
     { id: 'occupation', label: 'Occupation', value: 'Software Engineer at Google', type: 'mandatory' },
     { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, Hiking, Painting, Cooking', type: 'mandatory' },
     { id: 'religion', label: 'Religion / Caste / Gotra', value: 'Hindu / Brahmin / Kashyap', type: 'mandatory' },
-    
+
     // Family Details
     { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Business Owner', type: 'mandatory' },
     { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Lisa Doe / Homemaker', type: 'mandatory' },
     { id: 'siblings', label: 'Siblings', value: '1 Elder Brother (Married), 1 Younger Sister', type: 'mandatory' },
     { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear / Liberal', type: 'mandatory' },
-    
+
     // Partner Preferences
     { id: 'partnerPref', label: 'Partner Preference Summary', value: 'Seeking an ambitious and caring professional, aged 28-32, preferably from a similar background.', type: 'mandatory' },
-    
+
     // Contact
     { id: 'contact', label: 'Contact Details', value: 'jdoe@email.com | +91 98765 43210', type: 'mandatory' },
 ];
@@ -106,19 +106,19 @@ interface BiodataPreviewProps {
 }
 
 const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ fields, template, logo, photo }, ref) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  // Combine the ref from forwardRef with a local ref
-  const setRefs = useCallback((node: HTMLCanvasElement | null) => {
-    (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = node;
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    if (!ref) return;
-    if (typeof ref === 'function') {
-      ref(node);
-    } else {
-      (ref as React.MutableRefObject<HTMLCanvasElement | null>).current = node;
-    }
-  }, [ref]);
+    // Combine the ref from forwardRef with a local ref
+    const setRefs = useCallback((node: HTMLCanvasElement | null) => {
+        (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = node;
+
+        if (!ref) return;
+        if (typeof ref === 'function') {
+            ref(node);
+        } else {
+            (ref as React.MutableRefObject<HTMLCanvasElement | null>).current = node;
+        }
+    }, [ref]);
 
     // Utility to wrap text on the canvas
     const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
@@ -126,7 +126,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
         let line = '';
         let lineY = y;
 
-        for(let n = 0; n < words.length; n++) {
+        for (let n = 0; n < words.length; n++) {
             const testLine = line + words[n] + ' ';
             const metrics = ctx.measureText(testLine);
             const testWidth = metrics.width;
@@ -146,7 +146,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
     // Main drawing function. fields and template are passed as arguments, so they are excluded
     // from the dependency array.
     const drawBiodata = useCallback((ctx: CanvasRenderingContext2D, fields: BiodataField[], template: Template) => {
-        
+
         // --- Setup ---
         const width = CANVAS_WIDTH;
         const height = CANVAS_HEIGHT;
@@ -169,13 +169,13 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
             // --- Draw Content ---
             currentY = padding + 10;
-            
+
             // --- 2. Logo (Top Left) ---
             const logoSize = 80;
             const logoX = padding;
             const logoY = padding;
             // logo.object is used from the outer scope (props) and is a dependency
-            if (logo.object) { 
+            if (logo.object) {
                 // Draw logo image, maintaining aspect ratio
                 ctx.drawImage(logo.object, logoX, logoY, logoSize, logoSize);
             } else {
@@ -185,7 +185,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
                 ctx.font = `10px ${template.font}`;
                 ctx.fillStyle = template.primaryColor;
                 ctx.textAlign = 'center';
-                ctx.fillText('Logo', logoX + logoSize/2, logoY + logoSize/2);
+                ctx.fillText('Logo', logoX + logoSize / 2, logoY + logoSize / 2);
             }
 
             // --- 3. Photo (Top Right) ---
@@ -204,24 +204,24 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
                 ctx.font = `14px ${template.font}`;
                 ctx.fillStyle = template.primaryColor;
                 ctx.textAlign = 'center';
-                ctx.fillText('User Photo', photoX + photoWidth/2, photoY + photoHeight/2);
+                ctx.fillText('User Photo', photoX + photoWidth / 2, photoY + photoHeight / 2);
             }
-            
+
             // Reset Y position to start content below the main image/logo area
             currentY = photoY + photoHeight + padding;
-            
+
             // --- 4. Main Title/Header ---
             ctx.textAlign = 'center';
             ctx.font = `30px bold Inter, ${template.font}`;
             ctx.fillStyle = template.primaryColor;
             ctx.fillText('BIO-DATA FOR MARRIAGE', width / 2, currentY);
             currentY += 40;
-            
+
             ctx.font = `14px italic Inter, ${template.font}`;
             ctx.fillStyle = '#6b7280'; // gray-500
             ctx.fillText(`Date Generated: ${new Date().toLocaleDateString()}`, width / 2, currentY);
             currentY += 40;
-            
+
             // --- 5. Draw Fields (Dynamically positioned) ---
             ctx.textAlign = 'left';
             const labelX = padding;
@@ -238,12 +238,12 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
                 ctx.font = `14px Inter, ${template.font}`;
                 ctx.fillStyle = '#1f2937'; // gray-800
                 const nextY = wrapText(ctx, field.value, valueX, currentY, valueWidth, lineHeight);
-                
+
                 // Draw a separator line
                 ctx.strokeStyle = template.primaryColor + '33';
                 ctx.beginPath();
-                ctx.moveTo(labelX, nextY - lineHeight/2);
-                ctx.lineTo(width - padding, nextY - lineHeight/2);
+                ctx.moveTo(labelX, nextY - lineHeight / 2);
+                ctx.lineTo(width - padding, nextY - lineHeight / 2);
                 ctx.stroke();
 
                 // Move Y cursor for the next field
@@ -256,7 +256,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
             const bgImg = new Image();
             bgImg.crossOrigin = 'anonymous'; // Important for canvas toDataURL
             bgImg.src = template.bgImageUrl;
-            
+
             if (bgImg.complete) {
                 drawBackgroundAndContent(bgImg);
             } else {
@@ -299,10 +299,10 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
         <div
             id="biodata-preview-container"
             className={`shadow-2xl rounded-2xl transition-all duration-300 border-4 border-gray-200 text-gray-800`}
-            style={{ 
-              width: `${CANVAS_WIDTH}px`,
-              maxWidth: `${CANVAS_WIDTH}px`,
-              height: `${CANVAS_HEIGHT}px`,
+            style={{
+                width: `${CANVAS_WIDTH}px`,
+                maxWidth: `${CANVAS_WIDTH}px`,
+                height: `${CANVAS_HEIGHT}px`,
             }}
         >
             <canvas ref={setRefs} id="biodata-preview-target" />
@@ -354,8 +354,8 @@ const BiodataGenerator: React.FC = () => {
 
     // Handle changes to a field value
     const handleFieldChange = (id: string, value: string) => {
-        setFields(prevFields => 
-            prevFields.map(field => 
+        setFields(prevFields =>
+            prevFields.map(field =>
                 field.id === id ? { ...field, value } : field
             )
         );
@@ -368,14 +368,14 @@ const BiodataGenerator: React.FC = () => {
             if (index === -1) return prevFields;
 
             const newIndex = index + (direction === 'up' ? -1 : 1);
-            
+
             // Check boundaries
             if (newIndex < 0 || newIndex >= prevFields.length) return prevFields;
 
             const newFields = [...prevFields];
             // Swap the elements
             [newFields[index], newFields[newIndex]] = [newFields[index], newFields[index]];
-            
+
             return newFields;
         });
     };
@@ -403,13 +403,13 @@ const BiodataGenerator: React.FC = () => {
         if (file) {
             const tempUrl = URL.createObjectURL(file);
             const setter = imageType === 'logo' ? setLogo : setPhoto;
-            
+
             // Revoke previous URL if necessary
             const currentUrl = imageType === 'logo' ? logo.url : photo.url;
             if (currentUrl && currentUrl.startsWith('blob:')) {
                 URL.revokeObjectURL(currentUrl);
             }
-            
+
             // Load the new image
             loadImage(tempUrl, setter);
         }
@@ -423,30 +423,30 @@ const BiodataGenerator: React.FC = () => {
         setGenerationStatus('loading');
 
         const canvas = canvasRef.current;
-        
+
         // Check for jsPDF library presence
         if (!canvas || typeof window.jsPDF === 'undefined') {
-          setGenerationStatus('error');
-          console.error("PDF generation failed: Canvas element or jsPDF library (ensure script is loaded) not found.");
-          setIsGenerating(false);
-          // Show a user-friendly message about missing dependency
-          return;
+            setGenerationStatus('error');
+            console.error("PDF generation failed: Canvas element or jsPDF library (ensure script is loaded) not found.");
+            setIsGenerating(false);
+            // Show a user-friendly message about missing dependency
+            return;
         }
-        
+
         try {
             // Get the data URL from the canvas
             const imgData = canvas.toDataURL('image/png');
 
             // Initialize jsPDF in portrait, mm units, A4 format
-            const pdf = new window.jsPDF('p', 'mm', 'a4'); 
-            
+            const pdf = new window.jsPDF('p', 'mm', 'a4');
+
             const pdfWidth = 210; // A4 width in mm
-            
+
             // Calculate image height in mm based on canvas ratio (500x800 is 1:1.6)
             const pdfHeight = CANVAS_HEIGHT * pdfWidth / CANVAS_WIDTH;
-            
+
             // Add the image to the PDF
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); 
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
             // Save the PDF
             pdf.save(`WeddingBiodata_${fields[0].value.replace(/\s/g, '_')}.pdf`);
@@ -474,7 +474,7 @@ const BiodataGenerator: React.FC = () => {
                     className="p-1 text-gray-500 hover:text-violet-600 disabled:opacity-30 rounded transition duration-150"
                     title="Move Up"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" /></svg>
                 </button>
                 <button
                     type="button"
@@ -483,10 +483,10 @@ const BiodataGenerator: React.FC = () => {
                     className="p-1 text-gray-500 hover:text-violet-600 disabled:opacity-30 rounded transition duration-150"
                     title="Move Down"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
                 </button>
             </div>
-            
+
             {/* Input fields */}
             <div className="flex-1 min-w-0">
                 <input
@@ -494,7 +494,7 @@ const BiodataGenerator: React.FC = () => {
                     value={field.label}
                     onChange={(e) => {
                         const newLabel = e.target.value;
-                        setFields(prevFields => 
+                        setFields(prevFields =>
                             prevFields.map(f => f.id === field.id ? { ...f, label: newLabel } : f)
                         );
                     }}
@@ -518,7 +518,7 @@ const BiodataGenerator: React.FC = () => {
                     className="p-1 mt-1 text-red-500 hover:text-red-700 rounded transition duration-150"
                     title="Remove Custom Field"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
                 </button>
             )}
         </div>
@@ -538,22 +538,22 @@ const BiodataGenerator: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0 h-16 w-16 bg-gray-200 rounded-lg overflow-hidden border">
-                    <img 
-                        src={currentUrl} 
-                        alt={label} 
+                    <img
+                        src={currentUrl}
+                        alt={label}
                         className="h-full w-full object-cover"
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.onerror = null; 
+                            target.onerror = null;
                             target.src = imageType === 'logo' ? PLACEHOLDER_LOGO_URL : PLACEHOLDER_PHOTO_URL;
                         }}
                     />
                 </div>
                 <label className="flex-1 cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-lg shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 transition duration-150">
                     Choose File
-                    <input 
-                        type="file" 
-                        className="sr-only" 
+                    <input
+                        type="file"
+                        className="sr-only"
                         accept="image/*"
                         onChange={(e) => onUpload(e, imageType)}
                     />
@@ -573,12 +573,12 @@ const BiodataGenerator: React.FC = () => {
                         <p className="text-gray-600 mb-6">Select a pre-designed template. This determines the overall look, color palette, and font of your biodata.</p>
                         <div className="space-y-4">
                             {templates.map((template) => (
-                                <div 
+                                <div
                                     key={template.id}
                                     onClick={() => setSelectedTemplate(template)}
                                     className={`p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md 
-                                        ${selectedTemplate.id === template.id 
-                                            ? 'border-violet-600 bg-violet-50 ring-4 ring-violet-200' 
+                                        ${selectedTemplate.id === template.id
+                                            ? 'border-violet-600 bg-violet-50 ring-4 ring-violet-200'
                                             : 'border-gray-200 hover:border-violet-400 bg-white'
                                         }`}
                                 >
@@ -595,13 +595,13 @@ const BiodataGenerator: React.FC = () => {
                         <h2 className="text-2xl font-bold mb-4 text-violet-600">Step 2: Upload Photos</h2>
                         <p className="text-gray-600 mb-6">Upload your main photo and an optional logo (e.g., a family crest or initials) for the top corners.</p>
                         <div className="space-y-6">
-                            <ImageUpload 
+                            <ImageUpload
                                 label="User Photo (Top Right)"
                                 imageType="photo"
                                 onUpload={handleImageUpload}
                                 currentUrl={photo.url}
                             />
-                            <ImageUpload 
+                            <ImageUpload
                                 label="Organization Logo (Top Left)"
                                 imageType="logo"
                                 onUpload={handleImageUpload}
@@ -619,9 +619,9 @@ const BiodataGenerator: React.FC = () => {
                         </p>
                         <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
                             {fields.map((field, index) => (
-                                <FieldInput 
+                                <FieldInput
                                     key={field.id}
-                                    field={field} 
+                                    field={field}
                                     index={index}
                                     isLast={index === fields.length - 1}
                                 />
@@ -633,33 +633,32 @@ const BiodataGenerator: React.FC = () => {
                         >
                             + Add Custom Field
                         </button>
-                        
+
                         <div className="mt-8 pt-4 border-t border-gray-200">
-                             <h3 className="text-xl font-semibold mb-4 text-gray-700">Download</h3>
+                            <h3 className="text-xl font-semibold mb-4 text-gray-700">Download</h3>
                             <button
                                 onClick={generatePdf}
                                 disabled={isGenerating}
-                                className={`w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-xl text-white transition-all duration-200 ${
-                                isGenerating
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:ring-offset-2'
-                                }`}
+                                className={`w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-xl text-white transition-all duration-200 ${isGenerating
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:ring-offset-2'
+                                    }`}
                             >
                                 {isGenerating && generationStatus === 'loading' ? (
-                                <>
-                                    <span className="animate-spin mr-2">⟳</span>
-                                    Generating PDF...
-                                </>
+                                    <>
+                                        <span className="animate-spin mr-2">⟳</span>
+                                        Generating PDF...
+                                    </>
                                 ) : generationStatus === 'success' ? (
-                                <>
-                                    <span className="mr-2">✓</span>
-                                    Download Complete!
-                                </>
+                                    <>
+                                        <span className="mr-2">✓</span>
+                                        Download Complete!
+                                    </>
                                 ) : (
-                                <>
-                                    <span className="mr-2">⬇</span>
-                                    Download Final Biodata PDF (A4)
-                                </>
+                                    <>
+                                        <span className="mr-2">⬇</span>
+                                        Download Final Biodata PDF (A4)
+                                    </>
                                 )}
                             </button>
                             {generationStatus === 'error' && (
@@ -678,21 +677,13 @@ const BiodataGenerator: React.FC = () => {
     // --- Main Render ---
     return (
         <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-inter">
-            <header className="text-center mb-8">
-                <h1 className="text-4xl font-extrabold text-gray-900 flex items-center justify-center">
-                    Wedding Biodata Wizard
-                </h1>
-                <p className="text-gray-500 mt-1">
-                    Follow the steps to instantly generate your customizable, print-ready biodata.
-                </p>
-            </header>
 
             {/* Adjusted Grid: Now 4 columns, 2 for the wizard, 2 for the canvas preview */}
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-12"> 
-                
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-0">
+
                 {/* Left Column: Wizard Controls and Steps (Takes 50% on large screens) */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg h-fit order-2 lg:order-1">
-                    
+                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg h-fit order-2 lg:order-1">
+
                     {/* Step Indicator */}
                     <div className="flex justify-between items-center mb-8 space-x-2">
                         {[1, 2, 3].map((s) => (
@@ -742,17 +733,17 @@ const BiodataGenerator: React.FC = () => {
                 </div>
 
                 {/* Right Column: Sticky Canvas Live Preview (Fixed Aspect Ratio) (Takes 50% on large screens) */}
-                <div className="lg:col-span-2 flex justify-center lg:justify-start items-start order-1 lg:order-2">
-                    <div 
+                <div className="lg:col-span-1 flex justify-center lg:justify-start items-start order-1 lg:order-2">
+                    <div
                         className="lg:sticky lg:top-8 w-full flex justify-center"
                         style={{ height: `${CANVAS_HEIGHT + 100}px` }} // Add height buffer for sticky positioning
                     >
                         <div className="bg-white p-4 rounded-xl shadow-2xl">
                             <h3 className="text-xl font-semibold mb-3 text-gray-800 text-center">Live Preview</h3>
-                            <BiodataPreview 
-                                ref={canvasRef} 
-                                fields={fields} 
-                                template={selectedTemplate} 
+                            <BiodataPreview
+                                ref={canvasRef}
+                                fields={fields}
+                                template={selectedTemplate}
                                 logo={logo}
                                 photo={photo}
                             />
