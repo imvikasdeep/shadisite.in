@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import logoImage from '/public/images/logo/logo.gif';
 
 const Header = () => {
-    
+
     const menuItems = [
         { name: 'Features', href: '/features' },
         { name: 'Pricing', href: '/pricing' },
@@ -11,13 +13,13 @@ const Header = () => {
     return (
         <header className="shadow-md bg-white">
             {/* Container: centers content and sets max width */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
                     {/* 1. Left: Logo (Positioned Right in the prompt's description, but often visually on the left) */}
                     <div className="flex-shrink-0">
                         <Link href="/" className="text-2xl font-bold text-indigo-600">
-                            YourLogo
+                            <Image className='max-w-full h-auto' src={logoImage} alt='Logo' width={240} height={60} />
                         </Link>
                     </div>
 

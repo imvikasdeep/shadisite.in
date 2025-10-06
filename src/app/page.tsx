@@ -2,14 +2,11 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 
-// Load jsPDF dynamically or assume it's loaded in the environment for PDF generation.
-// For a single file context, we assume the user loads it via a script tag.
-// <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 // --- External Library Type Definitions (for PDF download) ---
 interface JsPDFInstance {
     addImage: (data: string, format: string, x: number, y: number, w: number, h: number) => void;
     save: (filename: string) => void;
+    addPage: () => void;
 }
 
 declare global {
@@ -18,17 +15,23 @@ declare global {
     }
 }
 
-// --- CONSTANTS & CONFIGURATION ---
+// --- CONSTANTS & CONFIGURATION (A4 Proportions: 500x707 px) ---
 const CANVAS_WIDTH = 500;
-const CANVAS_HEIGHT = 800; // Standard A4-ish ratio for a single page biodata
+const CANVAS_HEIGHT = 707; // A4 aspect ratio (500 * 1.414)
 const DPI_SCALE = 2; // High DPI for crisp canvas rendering
 const TOTAL_STEPS = 3;
 
-// Placeholder image URLs (using Placehold.co)
-const TEMPLATE_BACKGROUND_IMAGE = "https://placehold.co/500x800/f0e6e6/8c6e6e?text=Floral+Background";
-const TEMPLATE_BACKGROUND_IMAGE_2 = "https://placehold.co/500x800/e6f0f0/6e8c8c?text=Geometric+Pattern";
-const PLACEHOLDER_PHOTO_URL = "https://placehold.co/150x200/cccccc/333333?text=User+Photo";
-const PLACEHOLDER_LOGO_URL = "https://placehold.co/80x80/ffffff/5c4b51?text=Logo";
+// A4 Proportion-Matched Metrics
+const PADDING = 40; // Spacing around the page
+const CONTENT_START_Y = PADDING + 175; // Y coordinate where main text content starts (below photos/header)
+const LINE_HEIGHT = 20; // Tighter line height for A4 density (12px font)
+const MAX_CONTENT_Y = CANVAS_HEIGHT - PADDING; // Max Y coordinate before forcing a page break
+
+// Placeholder image URLs
+const TEMPLATE_BACKGROUND_IMAGE = "./images/layout-1.jpeg";
+const TEMPLATE_BACKGROUND_IMAGE_2 = "https://placehold.co/500x707/f0f0f0/6e8c8c?text=Modern+Geometric+Background";
+const PLACEHOLDER_PHOTO_URL = "https://placehold.co/120x160/cccccc/333333?text=User+Photo";
+const PLACEHOLDER_LOGO_URL = "https://placehold.co/60x60/ffffff/5c4b51?text=Logo";
 
 
 // --- INTERFACES & TYPES ---
@@ -52,6 +55,10 @@ interface Template {
 interface ImageState {
     url: string;
     object: HTMLImageElement | null;
+}
+
+interface PageInfo {
+    fields: BiodataField[]; // Fields to be drawn on this specific page
 }
 
 // --- INITIAL DATA ---
@@ -80,35 +87,271 @@ const initialFields: BiodataField[] = [
     { id: 'height', label: 'Height / Weight', value: '5 ft 6 in / 55 kg', type: 'mandatory' },
     { id: 'education', label: 'Education', value: 'Master of Science (Computer Science)', type: 'mandatory' },
     { id: 'occupation', label: 'Occupation', value: 'Software Engineer at Google', type: 'mandatory' },
-    { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, Hiking, Painting, Cooking', type: 'mandatory' },
+    { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, Hiking, Painting, Cooking, Writing short stories and traveling to remote mountains to try new vegetarian cuisines.', type: 'mandatory' },
     { id: 'religion', label: 'Religion / Caste / Gotra', value: 'Hindu / Brahmin / Kashyap', type: 'mandatory' },
-
     // Family Details
-    { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Business Owner', type: 'mandatory' },
-    { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Lisa Doe / Homemaker', type: 'mandatory' },
-    { id: 'siblings', label: 'Siblings', value: '1 Elder Brother (Married), 1 Younger Sister', type: 'mandatory' },
-    { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear / Liberal', type: 'mandatory' },
-
-    // Partner Preferences
-    { id: 'partnerPref', label: 'Partner Preference Summary', value: 'Seeking an ambitious and caring professional, aged 28-32, preferably from a similar background.', type: 'mandatory' },
-
-    // Contact
+    { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Business Owner, retired from MNC services after 30 years.', type: 'mandatory' },
+    { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Lisa Doe / Homemaker, highly involved in local community charity work.', type: 'mandatory' },
+    { id: 'siblings', label: 'Siblings', value: '1 Elder Brother (Married, working as a Doctor in London), 1 Younger Sister (In college).', type: 'mandatory' },
+    { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear / Liberal, with strong emphasis on education and traditional values.', type: 'mandatory' },
+    // Partner Preferences (Made this long to force page break for demonstration)
+    { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: 'Seeking an ambitious, caring, and well-educated professional, aged 28-32, preferably from a similar background or community. Must value family and have a positive, forward-looking approach to life. Someone who shares my interest in outdoor activities and intellectual discussions would be highly preferred. This section is intentionally lengthy to stress-test the multi-page logic, ensuring proper text wrapping and element placement across the page break. We are looking for someone who shares our family\'s core values of respect, honesty, and continuous self-improvement. The text is extended further to ensure we cross a page boundary in typical usage. We believe in mutual respect and open communication as the foundation of any lasting relationship. Compatibility in lifestyle and future goals is essential for us. This line is specifically for pushing the content further down the page.', type: 'mandatory' },
     { id: 'contact', label: 'Contact Details', value: 'jdoe@email.com | +91 98765 43210', type: 'mandatory' },
+    { id: 'appendix', label: 'Appendix Note', value: 'Thank you for reviewing the biodata. We look forward to hearing from you soon.', type: 'mandatory' },
 ];
+
+// --- TEXT MEASUREMENT HELPER ---
+
+/**
+ * Utility to calculate the required vertical space for text wrapping.
+ * NOTE: This function is critical for pagination accuracy.
+ */
+const calculateWrappedTextHeight = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): number => {
+    const words = text.split(' ');
+    let line = '';
+    let lineCount = 1;
+
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+
+        if (testWidth > maxWidth && n > 0) {
+            line = words[n] + ' ';
+            lineCount++;
+        } else {
+            line = testLine;
+        }
+    }
+    // Total height = number of lines * LINE_HEIGHT
+    return lineCount * LINE_HEIGHT;
+}
+
+// --- PAGINATION CALCULATION CORE (Runs on client-side only) ---
+
+/**
+ * Pre-calculates the field distribution across pages by simulating drawing height.
+ */
+const calculatePagination = (fields: BiodataField[], template: Template): PageInfo[] => {
+    if (typeof document === 'undefined') return []; // Safety check for SSR
+
+    const pages: PageInfo[] = [];
+    let remainingFields = [...fields];
+
+    // Use a dummy canvas for accurate text measurement 
+    const dummyCanvas = document.createElement('canvas');
+    const ctx = dummyCanvas.getContext('2d');
+    if (!ctx) return [];
+    ctx.scale(DPI_SCALE, DPI_SCALE); // Ensure scale matches drawing context
+
+    const contentWidth = CANVAS_WIDTH - 2 * PADDING;
+    const valueWidth = contentWidth - 150;
+
+    // Helper to calculate space consumed by a field, which includes label, wrapped value, and spacing.
+    const calculateFieldConsumption = (field: BiodataField): number => {
+        // Label height: always 1 line
+        let height = LINE_HEIGHT;
+
+        // Value height: calculate wrapped text height
+        ctx.font = `12px Inter, ${template.font}`;
+        height += calculateWrappedTextHeight(ctx, field.value, valueWidth);
+
+        // Add spacing for separator and next field: 15px
+        height += 15;
+        return height;
+    };
+
+
+    while (remainingFields.length > 0) {
+        // Y position where content begins on the current page
+        let currentY = pages.length === 0 ? CONTENT_START_Y : PADDING + 15;
+        const pageFields: BiodataField[] = [];
+
+        for (let i = 0; i < remainingFields.length; i++) {
+            const field = remainingFields[i];
+
+            // Calculate the total height this field will consume
+            const requiredHeight = calculateFieldConsumption(field);
+
+            // The position the Y cursor will be at AFTER drawing this field
+            const nextCalculatedY = currentY + requiredHeight;
+
+            // Check for page overflow
+            if (nextCalculatedY > MAX_CONTENT_Y && pageFields.length > 0) {
+                // If it doesn't fit and we already drew fields on this page, break to a new page
+                break;
+            }
+
+            // If it fits (or if it's the very first field on a new page, even if long)
+            pageFields.push(field);
+            currentY = nextCalculatedY;
+
+            // Edge case: If the field is so long it takes multiple pages, the loop should 
+            // only take the part that fits and move on, but since we are breaking fields by
+            // entry, we must ensure every field that starts on a page is placed there.
+            // The current logic places the whole field, and if it's too long, it pushes 
+            // the max Y limit slightly. This is acceptable for a biodata where fields
+            // are short. For simplicity, we ensure if it's the first element (pageFields.length === 0),
+            // it MUST be included, regardless of length.
+            if (pageFields.length === 1 && nextCalculatedY > MAX_CONTENT_Y) {
+                // If the *first* field is too long, we keep it on the page and move on to the next.
+                // This handles the case where a single field exceeds the page boundary.
+                // The assumption is the content will flow off the canvas, but we prioritize
+                // placing every field. However, for an A4 template, a single field must
+                // always be allowed on a page. The check `pageFields.length > 0` ensures this.
+            }
+
+        }
+
+        // Add the fields collected for this page
+        if (pageFields.length > 0) {
+            pages.push({ fields: pageFields });
+            // Update remaining fields for the next iteration
+            remainingFields = remainingFields.slice(pageFields.length);
+        } else if (remainingFields.length > 0) {
+            // Should only happen if content is extremely tall, but for safety:
+            console.error("Pagination failed to place a field. Forcing remaining fields onto one page.");
+            pages.push({ fields: remainingFields });
+            remainingFields = [];
+        }
+    }
+
+    return pages;
+};
+
+
+// --- Core Drawing Logic for a Single Page ---
+
+/**
+ * Draws the content of a single page using only the fields provided.
+ */
+const drawContentForPage = (
+    ctx: CanvasRenderingContext2D,
+    pageFields: BiodataField[],
+    template: Template,
+    logo: ImageState,
+    photo: ImageState,
+    pageNumber: number = 1
+) => {
+
+    const width = CANVAS_WIDTH;
+    const height = CANVAS_HEIGHT;
+    const contentWidth = width - 2 * PADDING;
+    let currentY = PADDING + 10;
+
+    // 1. Draw Background
+    ctx.fillStyle = template.primaryColor + '1A';
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Page Indicator
+    ctx.font = `10px ${template.font}`;
+    ctx.fillStyle = template.primaryColor;
+    ctx.textAlign = 'center';
+    ctx.fillText(`- Page ${pageNumber} -`, width / 2, height - PADDING + 10);
+
+    if (pageNumber === 1) {
+        // --- 3. Header Elements (Only on Page 1) ---
+        const logoSize = 60;
+        const photoWidth = 120;
+        const photoHeight = 160;
+
+        // Logo
+        if (logo.object) {
+            ctx.drawImage(logo.object, PADDING, PADDING, logoSize, logoSize);
+        }
+
+        // Photo
+        if (photo.object) {
+            ctx.drawImage(photo.object, width - PADDING - photoWidth, PADDING, photoWidth, photoHeight);
+        }
+
+        // Title/Name
+        ctx.textAlign = 'left';
+        ctx.font = `28px bold Inter, ${template.font}`;
+        ctx.fillStyle = template.primaryColor;
+        const nameField = pageFields.find(f => f.id === 'name') || pageFields[0];
+        ctx.fillText(nameField?.value.toUpperCase() || 'BIO-DATA', PADDING, PADDING + 120);
+
+        // Start content drawing here
+        currentY = CONTENT_START_Y;
+    } else {
+        // Start content drawing closer to the top for subsequent pages
+        currentY = PADDING + 15;
+    }
+
+    // --- 4. Draw Fields for this Page ---
+    ctx.textAlign = 'left';
+    const labelX = PADDING;
+    const valueX = PADDING + 150;
+    const valueWidth = contentWidth - 150;
+
+    // Ensure text is black for content
+    ctx.fillStyle = '#1f2937';
+
+    pageFields.forEach((field) => {
+        // Draw Label
+        ctx.font = `12px bold Inter, ${template.font}`;
+        ctx.fillStyle = template.primaryColor;
+        ctx.fillText(field.label, labelX, currentY);
+
+        // Draw Value (may wrap)
+        ctx.font = `12px Inter, ${template.font}`;
+        ctx.fillStyle = '#1f2937'; // gray-800
+        const nextY = wrapText(ctx, field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
+
+        // Draw a separator line
+        ctx.strokeStyle = template.primaryColor + '33';
+        ctx.beginPath();
+        ctx.moveTo(labelX, nextY - LINE_HEIGHT / 2);
+        ctx.lineTo(width - PADDING, nextY - LINE_HEIGHT / 2);
+        ctx.stroke();
+
+        // Move Y cursor for the next field
+        currentY = nextY + 15; // 15px gap
+    });
+};
+
+/**
+ * Utility to wrap text on the canvas and track vertical position.
+ * @returns The next Y coordinate after drawing this text block.
+ */
+const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
+    const words = text.split(' ');
+    let line = '';
+    let lineY = y;
+
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+
+        if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line.trim(), x, lineY);
+            line = words[n] + ' ';
+            lineY += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    // Draw the last line
+    ctx.fillText(line.trim(), x, lineY);
+    return lineY + lineHeight;
+}
+
 
 // --- Sub-Component: The Biodata Preview (The Canvas) ---
 
 interface BiodataPreviewProps {
-    fields: BiodataField[];
+    pageContent: PageInfo;
     template: Template;
     logo: ImageState;
     photo: ImageState;
+    pageNumber: number;
 }
 
-const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ fields, template, logo, photo }, ref) => {
+const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, photo, pageNumber }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Combine the ref from forwardRef with a local ref
     const setRefs = useCallback((node: HTMLCanvasElement | null) => {
         (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = node;
 
@@ -120,156 +363,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
         }
     }, [ref]);
 
-    // Utility to wrap text on the canvas
-    const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
-        const words = text.split(' ');
-        let line = '';
-        let lineY = y;
 
-        for (let n = 0; n < words.length; n++) {
-            const testLine = line + words[n] + ' ';
-            const metrics = ctx.measureText(testLine);
-            const testWidth = metrics.width;
-
-            if (testWidth > maxWidth && n > 0) {
-                ctx.fillText(line, x, lineY);
-                line = words[n] + ' ';
-                lineY += lineHeight;
-            } else {
-                line = testLine;
-            }
-        }
-        ctx.fillText(line, x, lineY);
-        return lineY + lineHeight;
-    }
-
-    // Main drawing function. fields and template are passed as arguments, so they are excluded
-    // from the dependency array.
-    const drawBiodata = useCallback((ctx: CanvasRenderingContext2D, fields: BiodataField[], template: Template) => {
-
-        // --- Setup ---
-        const width = CANVAS_WIDTH;
-        const height = CANVAS_HEIGHT;
-        const padding = 30;
-        const contentWidth = width - 2 * padding;
-        const lineHeight = 20;
-        let currentY = padding + 10; // Start Y position
-
-        // 1. Draw Background Image
-        // This function handles the async nature of image loading.
-        const drawBackgroundAndContent = (bgImgObject: HTMLImageElement | null) => {
-            // Draw Background
-            if (bgImgObject) {
-                ctx.drawImage(bgImgObject, 0, 0, width, height);
-            } else {
-                // Fallback to solid color if image fails to load
-                ctx.fillStyle = template.primaryColor + '1A';
-                ctx.fillRect(0, 0, width, height);
-            }
-
-            // --- Draw Content ---
-            currentY = padding + 10;
-
-            // --- 2. Logo (Top Left) ---
-            const logoSize = 80;
-            const logoX = padding;
-            const logoY = padding;
-            // logo.object is used from the outer scope (props) and is a dependency
-            if (logo.object) {
-                // Draw logo image, maintaining aspect ratio
-                ctx.drawImage(logo.object, logoX, logoY, logoSize, logoSize);
-            } else {
-                // Placeholder box for logo
-                ctx.fillStyle = template.primaryColor + '55';
-                ctx.fillRect(logoX, logoY, logoSize, logoSize);
-                ctx.font = `10px ${template.font}`;
-                ctx.fillStyle = template.primaryColor;
-                ctx.textAlign = 'center';
-                ctx.fillText('Logo', logoX + logoSize / 2, logoY + logoSize / 2);
-            }
-
-            // --- 3. Photo (Top Right) ---
-            const photoWidth = 150;
-            const photoHeight = 200;
-            const photoX = width - padding - photoWidth;
-            const photoY = padding;
-            // photo.object is used from the outer scope (props) and is a dependency
-            if (photo.object) {
-                // Draw photo image, maintaining aspect ratio within the box
-                ctx.drawImage(photo.object, photoX, photoY, photoWidth, photoHeight);
-            } else {
-                // Placeholder box for photo
-                ctx.fillStyle = template.primaryColor + '55';
-                ctx.fillRect(photoX, photoY, photoWidth, photoHeight);
-                ctx.font = `14px ${template.font}`;
-                ctx.fillStyle = template.primaryColor;
-                ctx.textAlign = 'center';
-                ctx.fillText('User Photo', photoX + photoWidth / 2, photoY + photoHeight / 2);
-            }
-
-            // Reset Y position to start content below the main image/logo area
-            currentY = photoY + photoHeight + padding;
-
-            // --- 4. Main Title/Header ---
-            ctx.textAlign = 'center';
-            ctx.font = `30px bold Inter, ${template.font}`;
-            ctx.fillStyle = template.primaryColor;
-            ctx.fillText('BIO-DATA FOR MARRIAGE', width / 2, currentY);
-            currentY += 40;
-
-            ctx.font = `14px italic Inter, ${template.font}`;
-            ctx.fillStyle = '#6b7280'; // gray-500
-            ctx.fillText(`Date Generated: ${new Date().toLocaleDateString()}`, width / 2, currentY);
-            currentY += 40;
-
-            // --- 5. Draw Fields (Dynamically positioned) ---
-            ctx.textAlign = 'left';
-            const labelX = padding;
-            const valueX = padding + 150; // Value starts 150px from the left
-            const valueWidth = contentWidth - 150;
-
-            fields.forEach((field) => {
-                // Draw Label
-                ctx.font = `14px bold Inter, ${template.font}`;
-                ctx.fillStyle = template.primaryColor;
-                ctx.fillText(field.label.toUpperCase(), labelX, currentY);
-
-                // Draw Value (may wrap)
-                ctx.font = `14px Inter, ${template.font}`;
-                ctx.fillStyle = '#1f2937'; // gray-800
-                const nextY = wrapText(ctx, field.value, valueX, currentY, valueWidth, lineHeight);
-
-                // Draw a separator line
-                ctx.strokeStyle = template.primaryColor + '33';
-                ctx.beginPath();
-                ctx.moveTo(labelX, nextY - lineHeight / 2);
-                ctx.lineTo(width - padding, nextY - lineHeight / 2);
-                ctx.stroke();
-
-                // Move Y cursor for the next field
-                currentY = nextY + 10;
-            });
-        };
-
-        // Load the background image synchronously if possible, or asynchronously
-        if (template.bgImageUrl) {
-            const bgImg = new Image();
-            bgImg.crossOrigin = 'anonymous'; // Important for canvas toDataURL
-            bgImg.src = template.bgImageUrl;
-
-            if (bgImg.complete) {
-                drawBackgroundAndContent(bgImg);
-            } else {
-                bgImg.onload = () => drawBackgroundAndContent(bgImg);
-                bgImg.onerror = () => drawBackgroundAndContent(null);
-            }
-        } else {
-            drawBackgroundAndContent(null);
-        }
-
-    }, [logo.object, photo.object]); // Only depends on images from outer scope (props)
-
-    // Effect to handle drawing on data/template/image change
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -283,16 +377,43 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Scale context down so drawing operations work on logical pixels (500x800)
+        // Scale context down so drawing operations work on logical pixels (500x707)
         ctx.scale(DPI_SCALE, DPI_SCALE);
 
         // Clear the canvas before redrawing
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Pass latest fields and template values to the drawing function
-        drawBiodata(ctx, fields, template);
+        // This function handles the async nature of image loading.
+        const drawBackgroundAndContent = () => {
+            // Redraw Background
+            const bgImg = new Image();
+            bgImg.crossOrigin = 'anonymous';
+            bgImg.src = template.bgImageUrl;
 
-    }, [fields, template, logo.object, photo.object, drawBiodata]); // useEffect must still depend on all data sources
+            const drawPage = (img: HTMLImageElement | null) => {
+                if (img) {
+                    ctx.drawImage(img, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                } else {
+                    // Fallback to solid color
+                    ctx.fillStyle = template.primaryColor + '1A';
+                    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                }
+
+                // Draw the specific page content
+                drawContentForPage(ctx, pageContent.fields, template, logo, photo, pageNumber);
+            }
+
+            if (bgImg.complete) {
+                drawPage(bgImg);
+            } else {
+                bgImg.onload = () => drawPage(bgImg);
+                bgImg.onerror = () => drawPage(null);
+            }
+        };
+
+        drawBackgroundAndContent();
+
+    }, [pageContent, template, logo.object, photo.object, pageNumber]);
 
 
     return (
@@ -301,7 +422,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
             className={`shadow-2xl rounded-2xl transition-all duration-300 border-4 border-gray-200 text-gray-800`}
             style={{
                 width: `${CANVAS_WIDTH}px`,
-                maxWidth: `${CANVAS_WIDTH}px`,
+                maxWidth: `100%`,
                 height: `${CANVAS_HEIGHT}px`,
             }}
         >
@@ -322,28 +443,77 @@ const BiodataGenerator: React.FC = () => {
     const [photo, setPhoto] = useState<ImageState>({ url: PLACEHOLDER_PHOTO_URL, object: null });
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
-    const [step, setStep] = useState(1); // New step state for the wizard
+    const [step, setStep] = useState(1);
+    const [isJsPdfLoaded, setIsJsPdfLoaded] = useState(false);
+
+    // NEW STATE: Stores the calculated pagination map (moved from useMemo)
+    const [pageContentMap, setPageContentMap] = useState<PageInfo[]>([]);
+    // State to control which page is shown in the preview
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Navigation handlers
-    const handleNext = () => setStep(prev => Math.min(prev + 1, TOTAL_STEPS));
-    const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
+    // --- Pagination Calculation (Client-side only) ---
+    useEffect(() => {
+        const pages = calculatePagination(fields, selectedTemplate);
+        setPageContentMap(pages);
 
-    // Function to pre-load an image from a URL or File object and store its object
+        // Set the view to the LATEST (last) page, as requested
+        if (pages.length > 0) {
+            setCurrentPageIndex(pages.length - 1);
+        } else {
+            setCurrentPageIndex(0);
+        }
+    }, [fields, selectedTemplate]);
+
+
+    const totalPages = pageContentMap.length;
+    const currentPageData = pageContentMap[currentPageIndex] || { fields: [] };
+
+
+    // Dynamic script loading for jsPDF
+    useEffect(() => {
+        if (typeof window.jsPDF !== 'undefined') {
+            setIsJsPdfLoaded(true);
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        script.async = true;
+
+        script.onload = () => {
+            console.log("jsPDF loaded successfully.");
+            setIsJsPdfLoaded(true);
+        };
+
+        script.onerror = () => {
+            console.error("Failed to load jsPDF script. Check CDN link.");
+            setIsJsPdfLoaded(true);
+            setGenerationStatus('error');
+        };
+
+        document.head.appendChild(script);
+
+        return () => {
+            if (document.head.contains(script)) {
+                document.head.removeChild(script);
+            }
+        };
+    }, []);
+
+    // Load initial placeholder images on mount
     const loadImage = useCallback((src: string, setter: React.Dispatch<React.SetStateAction<ImageState>>) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => setter({ url: src, object: img });
-        img.onerror = () => setter({ url: src, object: null }); // Fallback on error
+        img.onerror = () => setter({ url: src, object: null });
         img.src = src;
     }, []);
 
-    // Load initial placeholder images on mount
     useEffect(() => {
         loadImage(PLACEHOLDER_LOGO_URL, setLogo);
         loadImage(PLACEHOLDER_PHOTO_URL, setPhoto);
-        // Pre-load template images
         templates.forEach(t => {
             if (t.bgImageUrl) {
                 new Image().src = t.bgImageUrl;
@@ -351,8 +521,11 @@ const BiodataGenerator: React.FC = () => {
         });
     }, [loadImage]);
 
+    // Navigation handlers
+    const handleNext = () => setStep(prev => Math.min(prev + 1, TOTAL_STEPS));
+    const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
 
-    // Handle changes to a field value
+    // Field handlers (omitted for brevity, assume they are the same as previous response)
     const handleFieldChange = (id: string, value: string) => {
         setFields(prevFields =>
             prevFields.map(field =>
@@ -361,7 +534,6 @@ const BiodataGenerator: React.FC = () => {
         );
     };
 
-    // Handle moving a field up or down in the array (changes canvas position)
     const handleFieldMove = (id: string, direction: 'up' | 'down') => {
         setFields(prevFields => {
             const index = prevFields.findIndex(f => f.id === id);
@@ -369,18 +541,15 @@ const BiodataGenerator: React.FC = () => {
 
             const newIndex = index + (direction === 'up' ? -1 : 1);
 
-            // Check boundaries
             if (newIndex < 0 || newIndex >= prevFields.length) return prevFields;
 
             const newFields = [...prevFields];
-            // Swap the elements
-            [newFields[index], newFields[newIndex]] = [newFields[index], newFields[index]];
+            [newFields[index], newFields[newIndex]] = [newFields[newIndex], newFields[index]];
 
             return newFields;
         });
     };
 
-    // Handle adding a new custom field
     const addCustomField = () => {
         const newId = `custom-${Date.now()}`;
         const newField: BiodataField = {
@@ -392,61 +561,104 @@ const BiodataGenerator: React.FC = () => {
         setFields(prevFields => [...prevFields, newField]);
     };
 
-    // Handle removing a custom field
     const removeCustomField = (id: string) => {
         setFields(prevFields => prevFields.filter(field => field.id !== id));
     };
 
-    // Handle image upload for Logo or Photo
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, imageType: 'logo' | 'photo') => {
         const file = e.target.files?.[0];
         if (file) {
             const tempUrl = URL.createObjectURL(file);
             const setter = imageType === 'logo' ? setLogo : setPhoto;
 
-            // Revoke previous URL if necessary
             const currentUrl = imageType === 'logo' ? logo.url : photo.url;
             if (currentUrl && currentUrl.startsWith('blob:')) {
                 URL.revokeObjectURL(currentUrl);
             }
 
-            // Load the new image
             loadImage(tempUrl, setter);
         }
     };
 
+
     /**
-     * Generates and downloads the biodata as a single-page PDF.
+     * Generates and downloads the biodata as a multi-page PDF using the pre-calculated page data.
      */
     const generatePdf = useCallback(async () => {
-        setIsGenerating(true);
         setGenerationStatus('loading');
+        setIsGenerating(true);
 
-        const canvas = canvasRef.current;
-
-        // Check for jsPDF library presence
-        if (!canvas || typeof window.jsPDF === 'undefined') {
+        if (typeof window.jsPDF === 'undefined') {
             setGenerationStatus('error');
-            console.error("PDF generation failed: Canvas element or jsPDF library (ensure script is loaded) not found.");
+            console.error("PDF generation failed: jsPDF library not found.");
             setIsGenerating(false);
-            // Show a user-friendly message about missing dependency
             return;
         }
 
         try {
-            // Get the data URL from the canvas
-            const imgData = canvas.toDataURL('image/png');
-
-            // Initialize jsPDF in portrait, mm units, A4 format
             const pdf = new window.jsPDF('p', 'mm', 'a4');
+            const pdfWidth = 210;
+            const pdfHeight = CANVAS_HEIGHT * pdfWidth / CANVAS_WIDTH; // ~297 mm
 
-            const pdfWidth = 210; // A4 width in mm
+            // Create a temporary, off-screen canvas for rendering each page
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = CANVAS_WIDTH * DPI_SCALE;
+            tempCanvas.height = CANVAS_HEIGHT * DPI_SCALE;
+            const ctx = tempCanvas.getContext('2d');
+            if (!ctx) throw new Error("Could not get 2D context for temporary canvas.");
+            ctx.scale(DPI_SCALE, DPI_SCALE);
 
-            // Calculate image height in mm based on canvas ratio (500x800 is 1:1.6)
-            const pdfHeight = CANVAS_HEIGHT * pdfWidth / CANVAS_WIDTH;
+            // Preload background image
+            const bgImage = new Image();
+            bgImage.crossOrigin = 'anonymous';
+            bgImage.src = selectedTemplate.bgImageUrl;
 
-            // Add the image to the PDF
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            const loadBgPromise = new Promise<HTMLImageElement | null>((resolve) => {
+                if (bgImage.complete) {
+                    resolve(bgImage);
+                } else {
+                    bgImage.onload = () => resolve(bgImage);
+                    bgImage.onerror = () => {
+                        console.warn("Background image failed to load for PDF.");
+                        resolve(null);
+                    };
+                }
+            });
+
+            const loadedBgImage = await loadBgPromise;
+
+            // Loop through the pre-calculated pages
+            for (let i = 0; i < pageContentMap.length; i++) {
+                const pageInfo = pageContentMap[i];
+                const pageNum = i + 1;
+
+                // 1. Clear and draw background
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                if (loadedBgImage) {
+                    ctx.drawImage(loadedBgImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                } else {
+                    ctx.fillStyle = selectedTemplate.primaryColor + '1A';
+                    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                }
+
+                // 2. Draw the content for this specific page
+                drawContentForPage(
+                    ctx,
+                    pageInfo.fields,
+                    selectedTemplate,
+                    logo,
+                    photo,
+                    pageNum
+                );
+
+                // 3. Add page to PDF
+                if (i > 0) {
+                    pdf.addPage();
+                }
+
+                const imgData = tempCanvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            }
 
             // Save the PDF
             pdf.save(`WeddingBiodata_${fields[0].value.replace(/\s/g, '_')}.pdf`);
@@ -459,13 +671,11 @@ const BiodataGenerator: React.FC = () => {
             setTimeout(() => setGenerationStatus(null), 3000);
             setIsGenerating(false);
         }
-    }, [fields]);
+    }, [fields, isJsPdfLoaded, selectedTemplate, logo, photo, pageContentMap]);
 
-    // --- Helper Components Definition (Moved inside Main component for state access) ---
-
+    // --- FieldInput Component (Defined inside main component to access handlers) ---
     const FieldInput: React.FC<{ field: BiodataField, index: number, isLast: boolean }> = ({ field, index, isLast }) => (
         <div className="flex items-start space-x-2 p-2 border-b border-gray-100 hover:bg-gray-50 rounded-md transition duration-150">
-            {/* Reorder Buttons */}
             <div className="flex flex-col space-y-1 mt-1">
                 <button
                     type="button"
@@ -486,8 +696,6 @@ const BiodataGenerator: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
                 </button>
             </div>
-
-            {/* Input fields */}
             <div className="flex-1 min-w-0">
                 <input
                     type="text"
@@ -509,8 +717,6 @@ const BiodataGenerator: React.FC = () => {
                     placeholder="Field Value / Details"
                 />
             </div>
-
-            {/* Remove Button for Custom Fields */}
             {field.type === 'custom' && (
                 <button
                     type="button"
@@ -524,8 +730,7 @@ const BiodataGenerator: React.FC = () => {
         </div>
     );
 
-    // --- Image Upload Component ---
-
+    // --- ImageUpload Component (Defined inside main component to access handlers) ---
     interface ImageUploadProps {
         label: string;
         imageType: 'logo' | 'photo';
@@ -562,7 +767,6 @@ const BiodataGenerator: React.FC = () => {
         </div>
     );
 
-    // --- Step Rendering Functions ---
 
     const renderStepContent = () => {
         switch (step) {
@@ -638,16 +842,21 @@ const BiodataGenerator: React.FC = () => {
                             <h3 className="text-xl font-semibold mb-4 text-gray-700">Download</h3>
                             <button
                                 onClick={generatePdf}
-                                disabled={isGenerating}
-                                className={`w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-xl text-white transition-all duration-200 ${isGenerating
+                                disabled={isGenerating || !isJsPdfLoaded}
+                                className={`w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-xl text-white transition-all duration-200 ${(!isJsPdfLoaded || isGenerating)
                                         ? 'bg-gray-400 cursor-not-allowed'
                                         : 'bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:ring-offset-2'
                                     }`}
                             >
-                                {isGenerating && generationStatus === 'loading' ? (
+                                {!isJsPdfLoaded ? (
+                                    <>
+                                        <span className="animate-pulse mr-2">⏳</span>
+                                        Loading PDF Library...
+                                    </>
+                                ) : isGenerating && generationStatus === 'loading' ? (
                                     <>
                                         <span className="animate-spin mr-2">⟳</span>
-                                        Generating PDF...
+                                        Generating Multi-Page PDF...
                                     </>
                                 ) : generationStatus === 'success' ? (
                                     <>
@@ -663,7 +872,7 @@ const BiodataGenerator: React.FC = () => {
                             </button>
                             {generationStatus === 'error' && (
                                 <p className="mt-2 text-sm text-red-600 text-center">
-                                    An error occurred during PDF generation. Ensure **jsPDF** is loaded correctly.
+                                    An error occurred during PDF generation.
                                 </p>
                             )}
                         </div>
@@ -677,14 +886,11 @@ const BiodataGenerator: React.FC = () => {
     // --- Main Render ---
     return (
         <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-inter">
+            <div className="max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-7">
 
-            {/* Adjusted Grid: Now 4 columns, 2 for the wizard, 2 for the canvas preview */}
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-0">
-
-                {/* Left Column: Wizard Controls and Steps (Takes 50% on large screens) */}
+                {/* Left Column: Wizard Controls and Steps (60%) */}
                 <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg h-fit order-2 lg:order-1">
-
-                    {/* Step Indicator */}
+                    {/* Step Indicator (Unchanged) */}
                     <div className="flex justify-between items-center mb-8 space-x-2">
                         {[1, 2, 3].map((s) => (
                             <React.Fragment key={s}>
@@ -708,7 +914,7 @@ const BiodataGenerator: React.FC = () => {
                         {renderStepContent()}
                     </div>
 
-                    {/* Navigation Buttons */}
+                    {/* Navigation Buttons (Unchanged) */}
                     <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
                         <button
                             onClick={handlePrev}
@@ -732,20 +938,45 @@ const BiodataGenerator: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Right Column: Sticky Canvas Live Preview (Fixed Aspect Ratio) (Takes 50% on large screens) */}
-                <div className="lg:col-span-1 flex justify-center lg:justify-start items-start order-1 lg:order-2">
+                {/* Right Column: Sticky Canvas Live Preview (40%) */}
+                <div className="lg:col-span-2 flex justify-center lg:justify-start items-start order-1 lg:order-2">
                     <div
                         className="lg:sticky lg:top-8 w-full flex justify-center"
-                        style={{ height: `${CANVAS_HEIGHT + 100}px` }} // Add height buffer for sticky positioning
+                        style={{ height: `${CANVAS_HEIGHT + 100}px` }}
                     >
-                        <div className="bg-white p-4 rounded-xl shadow-2xl">
-                            <h3 className="text-xl font-semibold mb-3 text-gray-800 text-center">Live Preview</h3>
+                        <div className="bg-white p-4 rounded-xl shadow-lg">
+                            <h3 className="text-xl font-semibold text-gray-800 text-center mb-1">
+                                Live Preview (A4 Sim.)
+                            </h3>
+
+                            {/* Page Counter and Navigation */}
+                            <div className="flex items-center justify-center space-x-3 mb-3 text-sm font-medium text-gray-600">
+                                <button
+                                    onClick={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
+                                    disabled={currentPageIndex === 0}
+                                    className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" /></svg>
+                                </button>
+                                <span>
+                                    Page <span className="text-violet-600 font-bold">{currentPageIndex + 1}</span> of <span className="font-bold">{totalPages}</span>
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPageIndex(prev => Math.min(totalPages - 1, prev + 1))}
+                                    disabled={currentPageIndex === totalPages - 1}
+                                    className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 0 0 .708L10.293 8l-5.647 5.646a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708l-6-6a.5.5 0 0 0-.708 0z" /></svg>
+                                </button>
+                            </div>
+
                             <BiodataPreview
-                                ref={canvasRef}
-                                fields={fields}
+                                ref={currentPageIndex === 0 ? canvasRef : undefined} // Only pass ref to page 1 for PDF creation fallback
+                                pageContent={currentPageData}
                                 template={selectedTemplate}
                                 logo={logo}
                                 photo={photo}
+                                pageNumber={currentPageIndex + 1}
                             />
                         </div>
                     </div>
