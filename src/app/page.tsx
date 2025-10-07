@@ -27,17 +27,17 @@ const CANVAS_WIDTH = 500;
 // A4 aspect ratio is 1:1.414. 500 * 1.414 = 707 (approx)
 const CANVAS_HEIGHT = 707;
 const DPI_SCALE = 2; // High DPI for crisp canvas rendering
-const TOTAL_STEPS = 4; // <<< UPDATED: Changed from 3 to 4 steps
+const TOTAL_STEPS = 4;
 
 // A4 Proportion-Matched Metrics: ADJUSTED FOR HIGH DENSITY VISUAL FIT
-const PADDING = 80; // <<< UPDATED PADDING
-const FIELD_GAP = 8; // Drastically reduced spacing (was 18)
-const LINE_HEIGHT = 14; // Drastically reduced line height (was 22) to increase line count
-const FONT_SIZE = 10; // Drastically reduced font size (was 14) to increase content density
+const PADDING = 80;
+const FIELD_GAP = 8;
+const LINE_HEIGHT = 14;
+const FONT_SIZE = 10;
 
-// Derived constants now based on PADDING = 80
-const CONTENT_START_Y = PADDING + 175; // Y coordinate where main text content starts (below photos/header)
-const MAX_CONTENT_Y = CANVAS_HEIGHT - PADDING - 25; // Max Y coordinate before forcing a page break (leaving space for footer)
+// Derived constants
+const CONTENT_START_Y = PADDING + 175;
+const MAX_CONTENT_Y = CANVAS_HEIGHT - PADDING - 25;
 
 // Drawing configuration for side-by-side layout
 const LABEL_COL_WIDTH = 150;
@@ -45,8 +45,6 @@ const VALUE_COL_OFFSET = PADDING + 160;
 const VALUE_COL_WIDTH = CANVAS_WIDTH - VALUE_COL_OFFSET - PADDING;
 
 // Placeholder image URLs
-const TEMPLATE_BACKGROUND_IMAGE = "https://placehold.co/500x707/f0f0f0/ea268e?text=Elegant+Floral+Background";
-const TEMPLATE_BACKGROUND_IMAGE_2 = "https://placehold.co/500x707/f0f0f0/ea268e?text=Modern+Geometric+Background";
 const PLACEHOLDER_PHOTO_URL = "https://placehold.co/120x160/cccccc/333333?text=User+Photo";
 const PLACEHOLDER_LOGO_URL = "https://placehold.co/60x60/ffffff/5c4b51?text=Logo";
 
@@ -79,20 +77,39 @@ interface PageInfo {
 
 // --- INITIAL DATA & STEP GROUPINGS ---
 
-const NEW_PRIMARY_COLOR = '#ea268e'; // Primary color as requested
+// Default color remains vibrant pink
+const DEFAULT_PRIMARY_COLOR = '#ea268e';
 
 const templates: Template[] = [
     {
         id: 'elegant',
         name: 'Elegant Floral',
-        bgImageUrl: TEMPLATE_BACKGROUND_IMAGE,
-        primaryColor: NEW_PRIMARY_COLOR, // Updated color
+        bgImageUrl: "https://placehold.co/500x707/f0f0f0/ea268e?text=Elegant+Floral+Background",
+        primaryColor: DEFAULT_PRIMARY_COLOR, // Vibrant Pink
     },
     {
         id: 'modern',
         name: 'Modern Geometric',
-        bgImageUrl: TEMPLATE_BACKGROUND_IMAGE_2,
-        primaryColor: NEW_PRIMARY_COLOR, // Updated color
+        bgImageUrl: "https://placehold.co/500x707/e0e0e0/333333?text=Modern+Geometric+Background",
+        primaryColor: '#333333', // Dark Grey
+    },
+    {
+        id: 'classic',
+        name: 'Classic Minimal',
+        bgImageUrl: "https://placehold.co/500x707/ffffff/374151?text=Classic+Minimal+Background",
+        primaryColor: '#374151', // Deep Slate
+    },
+    {
+        id: 'nature',
+        name: 'Nature Green',
+        bgImageUrl: "https://placehold.co/500x707/f0fff0/059669?text=Nature+Green+Background",
+        primaryColor: '#059669', // Emerald Green
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        bgImageUrl: "https://placehold.co/500x707/f0e0e0/881337?text=Royal+Maroon+Background",
+        primaryColor: '#881337', // Deep Maroon
     },
 ];
 
@@ -125,7 +142,7 @@ const initialFields: BiodataField[] = [
 
 const PERSONAL_INFO_IDS = ['name', 'dob', 'height', 'education', 'occupation', 'hobbies', 'religion'];
 const FAMILY_INFO_IDS = ['father', 'mother', 'siblings', 'familyType', 'partnerPref'];
-const CONTACT_OTHER_IDS = ['contact', 'appendix', 'extra1', 'extra2', 'extra3', 'extra4']; // Start of custom fields
+const CONTACT_OTHER_IDS = ['contact', 'appendix']; // These plus any custom field added are for step 4
 
 
 // --- EXTERNAL SCRIPT LOADING HOOK (FIX for PDF Library Not Found) ---
@@ -134,9 +151,8 @@ const CONTACT_OTHER_IDS = ['contact', 'appendix', 'extra1', 'extra2', 'extra3', 
  */
 const useExternalScript = (url: string, globalVariableName: string) => {
     const [isLoaded, setIsLoaded] = useState(false);
-
+    
     // Assert window as a Record<string, unknown> to allow dynamic property access
-    // without violating the 'no-explicit-any' rule.
     const globalScope = globalThis as Record<string, unknown>;
 
     useEffect(() => {
@@ -172,7 +188,7 @@ const useExternalScript = (url: string, globalVariableName: string) => {
         // Start check immediately after appending (and on load event)
         script.onload = () => {
             // Give a slight delay after onload completes
-            setTimeout(checkLoad, 50);
+            setTimeout(checkLoad, 50); 
         };
         script.onerror = () => {
             console.error(`Script loading error for: ${url}`);
@@ -185,7 +201,7 @@ const useExternalScript = (url: string, globalVariableName: string) => {
         return () => {
             // Cleanup script tag on component unmount
             if (document.body.contains(script)) {
-                document.body.removeChild(script);
+                 document.body.removeChild(script);
             }
         };
     }, [url, globalVariableName]);
@@ -594,15 +610,16 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
 
 
     return (
-        <div className="flex items-start space-x-2 p-2 border-b border-gray-100 hover:bg-gray-50 rounded-md transition duration-150">
-            <div className="flex flex-col space-y-1 mt-1">
+        // Enhanced field wrapper styling
+        <div className="flex items-start space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200">
+            <div className="flex flex-col space-y-1 mt-1 flex-shrink-0">
                 {/* UP Button: Disable if it's the first in the visible group */}
                 <button
                     type="button"
                     onClick={() => onFieldMove(field.id, 'up')}
                     disabled={isFirstInGroup}
                     // Retaining text-pink-500 for move buttons as a highlight color
-                    className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded transition duration-150"
+                    className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded-full transition duration-150"
                     title="Move Up"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" /></svg>
@@ -613,33 +630,44 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                     onClick={() => onFieldMove(field.id, 'down')}
                     disabled={isLastInGroup}
                     // Retaining text-pink-500 for move buttons as a highlight color
-                    className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded transition duration-150"
+                    className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded-full transition duration-150"
                     title="Move Down"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
                 </button>
             </div>
-            <div className="flex-1 min-w-0">
-                <input
-                    type="text"
-                    value={field.label}
-                    onChange={handleLabelInput}
-                    className="w-full text-sm font-semibold p-1 mb-1 border rounded-md"
-                    placeholder="Field Label"
-                />
-                <textarea
-                    value={field.value}
-                    onChange={handleValueChange}
-                    rows={field.value.length > 50 ? 3 : 1}
-                    className="w-full text-sm p-1 border rounded-md resize-y"
-                    placeholder="Field Value / Details"
-                />
+            {/* New responsive side-by-side layout for label and value */}
+            <div className="flex-1 min-w-0 flex flex-col md:flex-row md:space-x-4">
+                {/* Label Input (Wider on mobile, 40% on desktop) */}
+                <div className="w-full md:w-2/5 mb-2 md:mb-0">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Field Label</label>
+                    <input
+                        type="text"
+                        value={field.label}
+                        onChange={handleLabelInput}
+                        // Added focus ring and thicker border for polish
+                        className="w-full text-sm font-semibold p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
+                        placeholder="e.g., Full Name"
+                    />
+                </div>
+                {/* Value Input (Wider on mobile, 60% on desktop) */}
+                <div className="w-full md:w-3/5">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Field Value</label>
+                    <textarea
+                        value={field.value}
+                        onChange={handleValueChange}
+                        rows={field.value.length > 50 ? 3 : 1}
+                        // Added focus ring and thicker border for polish
+                        className="w-full text-sm p-2 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
+                        placeholder="e.g., Jane Doe / 30 Years"
+                    />
+                </div>
             </div>
             {field.type === 'custom' && (
                 <button
                     type="button"
                     onClick={() => onRemoveCustomField(field.id)}
-                    className="p-1 mt-1 text-red-500 hover:text-red-700 rounded transition duration-150"
+                    className="p-2 mt-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 transition duration-150 self-start" // self-start to align with the top
                     title="Remove Custom Field"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
@@ -662,33 +690,38 @@ const BiodataGenerator: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
     const [step, setStep] = useState(1);
-
-    // FIX: Define theme variables here so they are globally accessible.
-    // Using fuchsia-600/100 to approximate the vibrant pink look in Tailwind
+    const [highestStepVisited, setHighestStepVisited] = useState(1); // NEW: Track highest visited step
+    
+    // Define theme variables
     const primaryTextClass = "text-fuchsia-600";
     const primaryBgClass = "bg-fuchsia-600";
     const primaryBgHoverClass = "hover:bg-fuchsia-700";
     const primaryRingClass = "ring-fuchsia-200";
     const primaryBorderClass = "border-fuchsia-600";
-    // RE-INTRODUCING the light background class which was previously removed.
-    const lightBgClass = "bg-fuchsia-50";
-
+    const lightBgClass = "bg-fuchsia-50"; 
+    
 
     // NEW: Use the robust external script loader
     const isJsPdfLoaded = useExternalScript(
-        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", 
         'jspdf' // Check for the global 'jspdf' object
-    );
+    ); 
     const isHtml2CanvasLoaded = useExternalScript(
-        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", 
         'html2canvas'
     );
     const isLibrariesLoaded = isJsPdfLoaded && isHtml2CanvasLoaded;
-
+    
     const [pageContentMap, setPageContentMap] = useState<PageInfo[]>([]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    // Update highest visited step whenever 'step' changes
+    useEffect(() => {
+        setHighestStepVisited(prev => Math.max(prev, step));
+    }, [step]);
+
 
     // --- Pagination Calculation (Client-side only) ---
     // Recalculated whenever fields or layout constants (like font size) change.
@@ -727,8 +760,18 @@ const BiodataGenerator: React.FC = () => {
     }, [loadImage]);
 
     // Navigation handlers
-    const handleNext = () => setStep(prev => Math.min(prev + 1, TOTAL_STEPS));
-    const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
+    // Changed 'handleNext' to use 'Continue' text (via props/rendering)
+    const handleNext = () => setStep(prev => Math.min(prev + 1, TOTAL_STEPS)); 
+    // Changed 'handlePrev' to use 'Back' text (via props/rendering)
+    const handlePrev = () => setStep(prev => Math.max(prev - 1, 1)); 
+    
+    // NEW: Function to handle step navigation from the indicator
+    const handleStepClick = (s: number) => {
+        if (s <= highestStepVisited) {
+            setStep(s);
+        }
+    }
+
 
     // --- Optimized Field Handlers using useCallback for stability ---
 
@@ -736,9 +779,9 @@ const BiodataGenerator: React.FC = () => {
     const getCurrentStepFieldIds = (currentStep: number): string[] => {
         switch (currentStep) {
             case 2:
-                return PERSONAL_INFO_IDS;
+                return fields.filter(f => PERSONAL_INFO_IDS.includes(f.id)).map(f => f.id);
             case 3:
-                return FAMILY_INFO_IDS;
+                return fields.filter(f => FAMILY_INFO_IDS.includes(f.id)).map(f => f.id);
             case 4:
                 // Include all fields that are not in the first two groups
                 return fields.filter(f => !PERSONAL_INFO_IDS.includes(f.id) && !FAMILY_INFO_IDS.includes(f.id)).map(f => f.id);
@@ -770,10 +813,10 @@ const BiodataGenerator: React.FC = () => {
             const allFieldIds = prevFields.map(f => f.id);
             // 2. Get the list of IDs for the current *visible* group.
             const currentGroupIds = getCurrentStepFieldIds(step);
-
+            
             // 3. Find the index of the moving field in the *current group*
             const groupIndex = currentGroupIds.findIndex(groupId => groupId === id);
-
+            
             if (groupIndex === -1) return prevFields;
 
             const newGroupIndex = groupIndex + (direction === 'up' ? -1 : 1);
@@ -837,9 +880,8 @@ const BiodataGenerator: React.FC = () => {
         setIsGenerating(true);
 
         // Robust check for jsPDF constructor
-        // We use window.jspdf or window.jsPDF (which is what the global definition covers)
-        const jsPDFConstructor = (window).jspdf ? (window).jspdf.jsPDF : (window).jsPDF;
-
+        const jsPDFConstructor = (window as any).jspdf ? (window as any).jspdf.jsPDF : (window as any).jsPDF;
+        
         if (typeof jsPDFConstructor === 'undefined' || typeof window.html2canvas === 'undefined') {
             setGenerationStatus('error');
             console.error("PDF generation failed: jsPDF or html2canvas library not found.");
@@ -990,31 +1032,35 @@ const BiodataGenerator: React.FC = () => {
             case 1:
                 return (
                     <>
-                        <h2 className={`text-2xl font-bold mb-4 ${primaryTextClass}`}>Step 1: Choose Template & Upload Photos</h2>
+                        {/* Heading color is now black */}
+                        <h2 className="text-2xl font-bold mb-4 text-black">Step 1: Template & Photo Setup</h2>
                         <p className="text-gray-600 mb-6">Select a visual theme and provide your photos.</p>
 
                         <div className="space-y-4 mb-8">
-                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">1A: Select Template</h3>
-                            <div className="flex space-x-4">
+                            {/* Removed 1A: from heading */}
+                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Select Template</h3>
+                            {/* Flex wrap for better mobile responsiveness */}
+                            <div className="flex flex-wrap gap-4"> 
                                 {templates.map((template) => (
                                     <div
                                         key={template.id}
                                         onClick={() => setSelectedTemplate(template)}
-                                        className={`flex-1 p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${lightBgClass} 
+                                        // Use w-1/3 or w-full to make templates fit nicely
+                                        className={`w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.33%-12px)] p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${lightBgClass} 
                                             ${selectedTemplate.id === template.id
                                                 ? `${primaryBorderClass} ring-4 ${primaryRingClass}`
                                                 : 'border-gray-200 hover:border-fuchsia-400'
                                             }`}
                                     >
                                         {/* Using inline style for exact color match on template name */}
-                                        <div className="font-semibold text-lg text-center" style={{ color: template.primaryColor }}>{template.name}</div>
+                                        <div className="font-semibold text-sm text-center" style={{ color: template.primaryColor }}>{template.name}</div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
                         <div className="space-y-6">
-                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">1B: Upload Photos</h3>
+                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Upload Photos</h3>
                             <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
                                 <ImageUpload
                                     label="User Photo (Top Right)"
@@ -1038,9 +1084,11 @@ const BiodataGenerator: React.FC = () => {
                 const stepSubtitle = step === 2 ? 'Customize your primary personal details like name, DOB, and occupation.' : 'Enter details about your family and your preferences for a partner.';
                 return (
                     <>
-                        <h2 className={`text-2xl font-bold mb-4 ${primaryTextClass}`}>Step {step}: Edit {stepTitle}</h2>
+                        {/* Heading color is now black */}
+                        <h2 className="text-2xl font-bold mb-4 text-black">Step {step}: Edit {stepTitle}</h2>
                         <p className="text-gray-600 mb-6">{stepSubtitle}</p>
-                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                        {/* Increased max height for better scrolling/editing space */}
+                        <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                             {filteredFields.map((field, index) => (
                                 <FieldInput
                                     key={field.id}
@@ -1060,11 +1108,13 @@ const BiodataGenerator: React.FC = () => {
             case 4:
                 return (
                     <>
-                        <h2 className={`text-2xl font-bold mb-4 ${primaryTextClass}`}>Step 4: Contact & Download</h2>
+                        {/* Heading color is now black */}
+                        <h2 className="text-2xl font-bold mb-4 text-black">Step 4: Contact & Download</h2>
                         <p className="text-gray-600 mb-6">
                             Enter contact details, any final notes, and add **Custom Fields**. Use the download button below to generate your multi-page PDF.
                         </p>
-                        <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
+                        {/* Increased max height for better scrolling/editing space */}
+                        <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2">
                             {filteredFields.map((field, index) => (
                                 <FieldInput
                                     key={field.id}
@@ -1081,8 +1131,8 @@ const BiodataGenerator: React.FC = () => {
                         </div>
                         <button
                             onClick={addCustomField}
-                            // Enhanced button styling remains: primaryBgClass, primaryBgHoverClass
-                            className={`mt-6 w-full px-8 py-3 text-base font-medium text-white ${primaryBgClass} rounded-xl ${primaryBgHoverClass} transition duration-150 shadow-xl`}
+                            // Enhanced button styling: added cursor-pointer, bulky padding
+                            className={`mt-6 w-full px-10 py-4 text-base font-medium text-white ${primaryBgClass} rounded-xl ${primaryBgHoverClass} transition duration-150 shadow-xl cursor-pointer`}
                         >
                             + Add Custom Field
                         </button>
@@ -1092,10 +1142,10 @@ const BiodataGenerator: React.FC = () => {
                             <button
                                 onClick={generatePdf}
                                 disabled={isGenerating || !isLibrariesLoaded}
-                                // Enhanced button styling remains: primaryBgClass, primaryBgHoverClass
-                                className={`w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl shadow-xl text-white transition-all duration-200 ${(!isLibrariesLoaded || isGenerating)
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-fuchsia-600 hover:bg-fuchsia-700 focus:ring-4 focus:ring-fuchsia-500 focus:ring-offset-2'
+                                // Enhanced button styling: added cursor-pointer, bulky padding
+                                className={`w-full flex items-center justify-center px-10 py-4 border border-transparent text-base font-medium rounded-xl shadow-xl text-white transition-all duration-200 cursor-pointer ${(!isLibrariesLoaded || isGenerating)
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-fuchsia-600 hover:bg-fuchsia-700 focus:ring-4 focus:ring-fuchsia-500 focus:ring-offset-2'
                                     }`}
                             >
                                 {!isLibrariesLoaded ? (
@@ -1114,10 +1164,7 @@ const BiodataGenerator: React.FC = () => {
                                         Download Complete!
                                     </>
                                 ) : (
-                                    <>
-                                        <span className="mr-2">⬇</span>
-                                        Download Final Biodata PDF (A4)
-                                    </>
+                                    'Download Final Biodata PDF (A4)' // Removed arrow
                                 )}
                             </button>
                             {generationStatus === 'error' && (
@@ -1142,23 +1189,34 @@ const BiodataGenerator: React.FC = () => {
 
                 {/* Left Column: Wizard Controls and Steps (60%) */}
                 <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg h-fit order-2 lg:order-1">
-                    {/* Step Indicator (Updated to 4 steps and controlled visibility) */}
+                    {/* Step Indicator (Updated for clickability on past steps, thicker line) */}
                     <div className="flex justify-between items-center mb-8 space-x-2">
-                        {[1, 2, 3, 4].map((s) => (
-                            <React.Fragment key={s}>
-                                <div className={`flex-1 flex flex-col items-center relative z-10 ${s <= step ? 'text-fuchsia-600' : 'text-gray-400'}`}>
-                                    <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold border-2 transition-all duration-300 ${s <= step ? 'bg-fuchsia-600 border-fuchsia-600 text-white' : 'bg-white border-gray-300'}`}>
-                                        {s}
+                        {[1, 2, 3, 4].map((s) => {
+                            const isCompleted = s < step;
+                            const isCurrent = s === step;
+                            const isVisited = s <= highestStepVisited;
+
+                            return (
+                                <React.Fragment key={s}>
+                                    <div className={`flex-1 flex flex-col items-center relative z-10 ${isCurrent ? primaryTextClass : 'text-gray-400'}`}>
+                                        <button
+                                            onClick={() => handleStepClick(s)}
+                                            disabled={!isVisited || isCurrent} // Disable if not visited or is current step
+                                            className={`w-10 h-10 flex items-center justify-center rounded-full font-bold border-2 transition-all duration-300 ${isVisited ? `${primaryBgClass} border-fuchsia-600 text-white cursor-pointer` : 'bg-white border-gray-300'} ${isCurrent ? 'ring-4 ring-fuchsia-200' : 'hover:border-fuchsia-400 disabled:opacity-100 disabled:ring-0'}`}
+                                        >
+                                            {s}
+                                        </button>
+                                        <span className={`mt-2 text-sm font-semibold text-center ${isVisited ? 'text-fuchsia-700' : 'text-gray-500'}`}>
+                                            {STEP_LABELS[s - 1]}
+                                        </span>
                                     </div>
-                                    <span className={`mt-2 text-xs font-medium text-center ${s <= step ? 'text-fuchsia-700' : 'text-gray-500'}`}>
-                                        {STEP_LABELS[s - 1]}
-                                    </span>
-                                </div>
-                                {s < TOTAL_STEPS && (
-                                    <div className={`flex-auto border-t-2 h-0 transition-all duration-300 ${s < step ? 'border-fuchsia-400' : 'border-gray-200'}`}></div>
-                                )}
-                            </React.Fragment>
-                        ))}
+                                    {s < TOTAL_STEPS && (
+                                        // Thicker border line: Corrected JSX by removing unnecessary inner curly braces
+                                        <div className={`flex-auto border-t-4 h-0 transition-all duration-300 ${isCompleted ? 'border-fuchsia-400' : 'border-gray-200'}`}></div>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
 
                     {/* Step Content */}
@@ -1166,26 +1224,28 @@ const BiodataGenerator: React.FC = () => {
                         {renderStepContent()}
                     </div>
 
-                    {/* Navigation Buttons (Updated styling) */}
-                    <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                    {/* Navigation Buttons (Updated with sticky bottom-0, 'Back' and 'Continue' text, and bulky styling) */}
+                    <div 
+                        className="sticky bottom-0 bg-white flex justify-between mt-8 py-6 border-t border-gray-200 z-20"
+                    >
                         <button
                             onClick={handlePrev}
                             disabled={step === 1}
-                            // Neutral style for secondary action (Previous)
-                            className="px-8 py-3 border border-gray-300 rounded-xl shadow-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150"
+                            // Bulky and no arrow, now 'Back'
+                            className="px-10 py-3 md:px-12 md:py-4 border border-gray-300 rounded-full text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150 cursor-pointer shadow-sm"
                         >
-                            ← Previous
+                            Back
                         </button>
                         {step < TOTAL_STEPS ? (
                             <button
                                 onClick={handleNext}
-                                // Primary style for key action (Next)
-                                className={`px-8 py-3 border border-transparent rounded-xl shadow-xl text-sm font-medium text-white ${primaryBgClass} ${primaryBgHoverClass} transition duration-150`}
+                                // Bulky and no arrow, now 'Continue'
+                                className={`px-10 py-3 md:px-12 md:py-4 border border-transparent rounded-full text-base font-semibold text-white ${primaryBgClass} ${primaryBgHoverClass} transition duration-150 cursor-pointer shadow-lg`}
                             >
-                                Next Step →
+                                Continue
                             </button>
                         ) : (
-                            <div className="text-sm text-gray-500 flex items-center">
+                            <div className="text-sm text-gray-500 flex items-center font-semibold">
                                 Final Step: Download
                             </div>
                         )}
@@ -1200,7 +1260,7 @@ const BiodataGenerator: React.FC = () => {
                     >
                         <div className="bg-white p-4 rounded-xl shadow-lg">
                             <h3 className="text-xl font-semibold text-gray-800 text-center mb-1">
-                                Live Preview (A4 Sim.)
+                                Live Preview
                             </h3>
 
                             {/* Page Counter and Navigation */}
