@@ -27,7 +27,7 @@ const CANVAS_WIDTH = 500;
 // A4 aspect ratio is 1:1.414. 500 * 1.414 = 707 (approx)
 const CANVAS_HEIGHT = 707;
 const DPI_SCALE = 2; // High DPI for crisp canvas rendering
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4; // <<< UPDATED: Changed from 3 to 4 steps
 
 // A4 Proportion-Matched Metrics: ADJUSTED FOR HIGH DENSITY VISUAL FIT
 const PADDING = 80; // <<< UPDATED PADDING
@@ -45,8 +45,8 @@ const VALUE_COL_OFFSET = PADDING + 160;
 const VALUE_COL_WIDTH = CANVAS_WIDTH - VALUE_COL_OFFSET - PADDING;
 
 // Placeholder image URLs
-const TEMPLATE_BACKGROUND_IMAGE = "https://placehold.co/500x707/f0f0f0/8c6e6e?text=Elegant+Floral+Background";
-const TEMPLATE_BACKGROUND_IMAGE_2 = "https://placehold.co/500x707/f0f0f0/6e8c8c?text=Modern+Geometric+Background";
+const TEMPLATE_BACKGROUND_IMAGE = "https://placehold.co/500x707/f0f0f0/ea268e?text=Elegant+Floral+Background";
+const TEMPLATE_BACKGROUND_IMAGE_2 = "https://placehold.co/500x707/f0f0f0/ea268e?text=Modern+Geometric+Background";
 const PLACEHOLDER_PHOTO_URL = "https://placehold.co/120x160/cccccc/333333?text=User+Photo";
 const PLACEHOLDER_LOGO_URL = "https://placehold.co/60x60/ffffff/5c4b51?text=Logo";
 
@@ -77,25 +77,27 @@ interface PageInfo {
     fields: BiodataField[]; // Fields to be drawn on this specific page
 }
 
-// --- INITIAL DATA ---
+// --- INITIAL DATA & STEP GROUPINGS ---
+
+const NEW_PRIMARY_COLOR = '#ea268e'; // Primary color as requested
 
 const templates: Template[] = [
     {
         id: 'elegant',
         name: 'Elegant Floral',
         bgImageUrl: TEMPLATE_BACKGROUND_IMAGE,
-        primaryColor: '#8c6e6e', // Deep Mauve
+        primaryColor: NEW_PRIMARY_COLOR, // Updated color
     },
     {
         id: 'modern',
         name: 'Modern Geometric',
         bgImageUrl: TEMPLATE_BACKGROUND_IMAGE_2,
-        primaryColor: '#6e8c8c', // Slate Teal
+        primaryColor: NEW_PRIMARY_COLOR, // Updated color
     },
 ];
 
 const initialFields: BiodataField[] = [
-    // Personal Details
+    // Step 2: Personal Details
     { id: 'name', label: 'Full Name', value: 'Jane Doe', type: 'mandatory' },
     { id: 'dob', label: 'Date of Birth / Age', value: '01 Jan 1995 / 30 Years', type: 'mandatory' },
     { id: 'height', label: 'Height / Weight', value: '5 ft 6 in / 55 kg', type: 'mandatory' },
@@ -103,16 +105,17 @@ const initialFields: BiodataField[] = [
     { id: 'occupation', label: 'Occupation', value: 'Senior Software Engineer at Google', type: 'mandatory' },
     { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, hiking, painting, playing piano, and cooking new international cuisines. These interests define my personality and are important to me.', type: 'mandatory' },
     { id: 'religion', label: 'Religion / Caste / Gotra', value: 'Hindu / Brahmin / Kaundinya', type: 'mandatory' },
-    // Family Details
+    // Step 3: Family Details
     { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Retired IAS Officer', type: 'mandatory' },
     { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Mary Doe / Homemaker', type: 'mandatory' },
     { id: 'siblings', label: 'Siblings', value: 'One elder brother (married, settled in USA), one younger sister (studying medicine).', type: 'mandatory' },
     { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear family with modern values and a traditional root. We are closely knit and supportive.', type: 'mandatory' },
     // Partner Preferences (Long field to test pagination)
     { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: 'Seeking a highly educated, ambitious, and caring partner from a similar background. Must be kind-hearted, respectful, and value family above all. Location preference is flexible, but must be willing to settle internationally. Seeking someone who enjoys travel and exploration, and is ready for long-term commitment. This detail is very important for a match. The ideal partner should also have a great sense of humor and enjoy quiet evenings at home as much as exciting trips. This field is intentionally made long to ensure that the new, higher-density layout correctly handles wrapping and pagination across the pages.', type: 'mandatory' },
+    // Step 4: Contact & Other Details
     { id: 'contact', label: 'Contact Details', value: 'Email: jane.doe@example.com | Phone: +1 123-456-7890 (Please contact after 7 PM IST)', type: 'mandatory' },
     { id: 'appendix', label: 'Appendix Note', value: 'A detailed horoscope is available upon request. We believe in meeting the right person to forge a strong bond.', type: 'mandatory' },
-    // Extra fields to test high density
+    // Extra fields to test high density (Custom fields added at the end)
     { id: 'extra1', label: 'Extra Field 1', value: 'This is an extra field added to test the new, highly dense content layout and ensure all content fits appropriately across multiple pages as needed.', type: 'custom' },
     { id: 'extra2', label: 'Extra Field 2', value: 'This field also helps verify the spacing and line breaks are accurate with the new, tighter $10 \text{px}$ font and $14 \text{px}$ line height. The goal is to maximize the content on the A4 page simulation.', type: 'custom' },
     { id: 'extra3', label: 'Extra Field 3', value: 'Another line of information to push the content down and confirm the pagination logic is correctly splitting the fields based on the smaller, tighter pixel requirements.', type: 'custom' },
@@ -120,11 +123,14 @@ const initialFields: BiodataField[] = [
 
 ];
 
+const PERSONAL_INFO_IDS = ['name', 'dob', 'height', 'education', 'occupation', 'hobbies', 'religion'];
+const FAMILY_INFO_IDS = ['father', 'mother', 'siblings', 'familyType', 'partnerPref'];
+const CONTACT_OTHER_IDS = ['contact', 'appendix', 'extra1', 'extra2', 'extra3', 'extra4']; // Start of custom fields
+
 
 // --- EXTERNAL SCRIPT LOADING HOOK (FIX for PDF Library Not Found) ---
 /**
  * Custom hook to dynamically load external scripts and wait for a global variable to be defined.
- * This is much more robust than relying on a single 'onload' event for complex libraries.
  */
 const useExternalScript = (url: string, globalVariableName: string) => {
     const [isLoaded, setIsLoaded] = useState(false);
@@ -392,7 +398,8 @@ const drawContentForPage = (
         ctx.font = `32px bold Inter, sans-serif`;
         ctx.fillStyle = template.primaryColor;
 
-        const nameField = pageFields.find(f => f.id === 'name');
+        // Find the 'name' field regardless of which step it's currently in
+        const nameField = initialFields.find(f => f.id === 'name');
         let nameText = 'BIO-DATA';
 
         if (nameField) {
@@ -557,6 +564,8 @@ interface FieldInputProps {
     onLabelChange: (id: string, newLabel: string) => void;
     onFieldMove: (id: string, direction: 'up' | 'down') => void;
     onRemoveCustomField: (id: string) => void;
+    // New prop to limit reordering scope
+    fieldGroupIds: string[];
 }
 
 const FieldInput: React.FC<FieldInputProps> = React.memo(({
@@ -566,7 +575,8 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
     onFieldChange,
     onLabelChange,
     onFieldMove,
-    onRemoveCustomField
+    onRemoveCustomField,
+    fieldGroupIds
 }) => {
 
     const handleValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -577,23 +587,33 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
         onLabelChange(field.id, e.target.value);
     };
 
+    // Calculate if up/down movement is allowed within the current visible group
+    const currentGroupIndex = fieldGroupIds.findIndex(id => id === field.id);
+    const isFirstInGroup = currentGroupIndex === 0;
+    const isLastInGroup = currentGroupIndex === fieldGroupIds.length - 1;
+
+
     return (
         <div className="flex items-start space-x-2 p-2 border-b border-gray-100 hover:bg-gray-50 rounded-md transition duration-150">
             <div className="flex flex-col space-y-1 mt-1">
+                {/* UP Button: Disable if it's the first in the visible group */}
                 <button
                     type="button"
                     onClick={() => onFieldMove(field.id, 'up')}
-                    disabled={index === 0}
-                    className="p-1 text-gray-500 hover:text-violet-600 disabled:opacity-30 rounded transition duration-150"
+                    disabled={isFirstInGroup}
+                    // Retaining text-pink-500 for move buttons as a highlight color
+                    className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded transition duration-150"
                     title="Move Up"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" /></svg>
                 </button>
+                {/* DOWN Button: Disable if it's the last in the visible group */}
                 <button
                     type="button"
                     onClick={() => onFieldMove(field.id, 'down')}
-                    disabled={isLast}
-                    className="p-1 text-gray-500 hover:text-violet-600 disabled:opacity-30 rounded transition duration-150"
+                    disabled={isLastInGroup}
+                    // Retaining text-pink-500 for move buttons as a highlight color
+                    className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded transition duration-150"
                     title="Move Down"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
@@ -643,6 +663,17 @@ const BiodataGenerator: React.FC = () => {
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
     const [step, setStep] = useState(1);
 
+    // FIX: Define theme variables here so they are globally accessible.
+    // Using fuchsia-600/100 to approximate the vibrant pink look in Tailwind
+    const primaryTextClass = "text-fuchsia-600";
+    const primaryBgClass = "bg-fuchsia-600";
+    const primaryBgHoverClass = "hover:bg-fuchsia-700";
+    const primaryRingClass = "ring-fuchsia-200";
+    const primaryBorderClass = "border-fuchsia-600";
+    // RE-INTRODUCING the light background class which was previously removed.
+    const lightBgClass = "bg-fuchsia-50";
+
+
     // NEW: Use the robust external script loader
     const isJsPdfLoaded = useExternalScript(
         "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
@@ -653,8 +684,6 @@ const BiodataGenerator: React.FC = () => {
         'html2canvas'
     );
     const isLibrariesLoaded = isJsPdfLoaded && isHtml2CanvasLoaded;
-
-    // The previous state 'isJsPdfLoaded' is now calculated by the hook
 
     const [pageContentMap, setPageContentMap] = useState<PageInfo[]>([]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -703,6 +732,22 @@ const BiodataGenerator: React.FC = () => {
 
     // --- Optimized Field Handlers using useCallback for stability ---
 
+    // Utility function to get the list of field IDs for the current step
+    const getCurrentStepFieldIds = (currentStep: number): string[] => {
+        switch (currentStep) {
+            case 2:
+                return PERSONAL_INFO_IDS;
+            case 3:
+                return FAMILY_INFO_IDS;
+            case 4:
+                // Include all fields that are not in the first two groups
+                return fields.filter(f => !PERSONAL_INFO_IDS.includes(f.id) && !FAMILY_INFO_IDS.includes(f.id)).map(f => f.id);
+            default:
+                return [];
+        }
+    }
+
+
     const handleFieldChange = useCallback((id: string, value: string) => {
         setFields(prevFields =>
             prevFields.map(field =>
@@ -721,19 +766,36 @@ const BiodataGenerator: React.FC = () => {
 
     const handleFieldMove = useCallback((id: string, direction: 'up' | 'down') => {
         setFields(prevFields => {
-            const index = prevFields.findIndex(f => f.id === id);
-            if (index === -1) return prevFields;
+            // 1. Get the list of all IDs currently in the fields state.
+            const allFieldIds = prevFields.map(f => f.id);
+            // 2. Get the list of IDs for the current *visible* group.
+            const currentGroupIds = getCurrentStepFieldIds(step);
 
-            const newIndex = index + (direction === 'up' ? -1 : 1);
+            // 3. Find the index of the moving field in the *current group*
+            const groupIndex = currentGroupIds.findIndex(groupId => groupId === id);
 
-            if (newIndex < 0 || newIndex >= prevFields.length) return prevFields;
+            if (groupIndex === -1) return prevFields;
 
+            const newGroupIndex = groupIndex + (direction === 'up' ? -1 : 1);
+
+            if (newGroupIndex < 0 || newGroupIndex >= currentGroupIds.length) return prevFields;
+
+            // 4. Get the ID of the target field to swap with
+            const targetId = currentGroupIds[newGroupIndex];
+
+            // 5. Find the *absolute* indices in the full fields array
+            const sourceAbsIndex = allFieldIds.indexOf(id);
+            const targetAbsIndex = allFieldIds.indexOf(targetId);
+
+            if (sourceAbsIndex === -1 || targetAbsIndex === -1) return prevFields;
+
+            // 6. Perform the swap on the full fields array
             const newFields = [...prevFields];
-            [newFields[index], newFields[newIndex]] = [newFields[newIndex], newFields[index]];
+            [newFields[sourceAbsIndex], newFields[targetAbsIndex]] = [newFields[targetAbsIndex], newFields[sourceAbsIndex]];
 
             return newFields;
         });
-    }, []);
+    }, [step, fields]); // Dependency on 'fields' is needed here to get latest group IDs
 
     const addCustomField = () => {
         const newId = `custom-${Date.now()}`;
@@ -743,6 +805,7 @@ const BiodataGenerator: React.FC = () => {
             value: '', // Empty default value
             type: 'custom',
         };
+        // Custom fields are always added to the end (Step 4's responsibility)
         setFields(prevFields => [...prevFields, newField]);
     };
 
@@ -906,74 +969,120 @@ const BiodataGenerator: React.FC = () => {
 
 
     const renderStepContent = () => {
+        // Filter fields based on the current step group
+        let filteredFields: BiodataField[] = [];
+        let groupIds: string[] = [];
+
+        if (step === 2) {
+            groupIds = PERSONAL_INFO_IDS;
+            filteredFields = fields.filter(f => PERSONAL_INFO_IDS.includes(f.id));
+        } else if (step === 3) {
+            groupIds = FAMILY_INFO_IDS;
+            filteredFields = fields.filter(f => FAMILY_INFO_IDS.includes(f.id));
+        } else if (step === 4) {
+            // Step 4 includes Contact/Other and all dynamically added custom fields
+            groupIds = fields.filter(f => CONTACT_OTHER_IDS.includes(f.id) || f.type === 'custom').map(f => f.id);
+            filteredFields = fields.filter(f => groupIds.includes(f.id));
+        }
+
+
         switch (step) {
             case 1:
                 return (
                     <>
-                        <h2 className="text-2xl font-bold mb-4 text-violet-600">Step 1: Choose Template & Style</h2>
-                        <p className="text-gray-600 mb-6">Select a pre-designed template. This determines the overall look, background, and color palette of your biodata.</p>
-                        <div className="space-y-4">
-                            {templates.map((template) => (
-                                <div
-                                    key={template.id}
-                                    onClick={() => setSelectedTemplate(template)}
-                                    className={`p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md 
-                                        ${selectedTemplate.id === template.id
-                                            ? 'border-violet-600 bg-violet-50 ring-4 ring-violet-200'
-                                            : 'border-gray-200 hover:border-violet-400 bg-white'
-                                        }`}
-                                >
-                                    <div className="font-semibold text-lg" style={{ color: template.primaryColor }}>{template.name}</div>
-                                </div>
-                            ))}
+                        <h2 className={`text-2xl font-bold mb-4 ${primaryTextClass}`}>Step 1: Choose Template & Upload Photos</h2>
+                        <p className="text-gray-600 mb-6">Select a visual theme and provide your photos.</p>
+
+                        <div className="space-y-4 mb-8">
+                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">1A: Select Template</h3>
+                            <div className="flex space-x-4">
+                                {templates.map((template) => (
+                                    <div
+                                        key={template.id}
+                                        onClick={() => setSelectedTemplate(template)}
+                                        className={`flex-1 p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${lightBgClass} 
+                                            ${selectedTemplate.id === template.id
+                                                ? `${primaryBorderClass} ring-4 ${primaryRingClass}`
+                                                : 'border-gray-200 hover:border-fuchsia-400'
+                                            }`}
+                                    >
+                                        {/* Using inline style for exact color match on template name */}
+                                        <div className="font-semibold text-lg text-center" style={{ color: template.primaryColor }}>{template.name}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">1B: Upload Photos</h3>
+                            <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
+                                <ImageUpload
+                                    label="User Photo (Top Right)"
+                                    imageType="photo"
+                                    onUpload={handleImageUpload}
+                                    currentUrl={photo.url}
+                                />
+                                <ImageUpload
+                                    label="Organization Logo (Top Left)"
+                                    imageType="logo"
+                                    onUpload={handleImageUpload}
+                                    currentUrl={logo.url}
+                                />
+                            </div>
                         </div>
                     </>
                 );
             case 2:
-                return (
-                    <>
-                        <h2 className="text-2xl font-bold mb-4 text-violet-600">Step 2: Upload Photos</h2>
-                        <p className="text-gray-600 mb-6">Upload your main photo and an optional logo (e.g., a family crest or initials) for the top corners.</p>
-                        <div className="space-y-6">
-                            <ImageUpload
-                                label="User Photo (Top Right)"
-                                imageType="photo"
-                                onUpload={handleImageUpload}
-                                currentUrl={photo.url}
-                            />
-                            <ImageUpload
-                                label="Organization Logo (Top Left)"
-                                imageType="logo"
-                                onUpload={handleImageUpload}
-                                currentUrl={logo.url}
-                            />
-                        </div>
-                    </>
-                );
             case 3:
+                const stepTitle = step === 2 ? 'Personal Info' : 'Family Info';
+                const stepSubtitle = step === 2 ? 'Customize your primary personal details like name, DOB, and occupation.' : 'Enter details about your family and your preferences for a partner.';
                 return (
                     <>
-                        <h2 className="text-2xl font-bold mb-4 text-violet-600">Step 3: Edit & Rearrange Fields</h2>
-                        <p className="text-gray-600 mb-6">
-                            Customize the content. Use the **arrows** to reorder sections. Edit the **Label** (bold) and the **Value** (details) for each field. **Fields left blank will be automatically removed from the PDF.** The density of the content in the preview is now much higher to simulate a standard A4 printout.
-                        </p>
+                        <h2 className={`text-2xl font-bold mb-4 ${primaryTextClass}`}>Step {step}: Edit {stepTitle}</h2>
+                        <p className="text-gray-600 mb-6">{stepSubtitle}</p>
                         <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                            {fields.map((field, index) => (
+                            {filteredFields.map((field, index) => (
                                 <FieldInput
                                     key={field.id}
                                     field={field}
                                     index={index}
-                                    isLast={index === fields.length - 1}
+                                    isLast={index === filteredFields.length - 1}
                                     onFieldChange={handleFieldChange}
                                     onLabelChange={handleLabelChange}
                                     onFieldMove={handleFieldMove}
                                     onRemoveCustomField={removeCustomField}
+                                    fieldGroupIds={groupIds} // Pass the list of IDs in this step for move logic
+                                />
+                            ))}
+                        </div>
+                    </>
+                );
+            case 4:
+                return (
+                    <>
+                        <h2 className={`text-2xl font-bold mb-4 ${primaryTextClass}`}>Step 4: Contact & Download</h2>
+                        <p className="text-gray-600 mb-6">
+                            Enter contact details, any final notes, and add **Custom Fields**. Use the download button below to generate your multi-page PDF.
+                        </p>
+                        <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
+                            {filteredFields.map((field, index) => (
+                                <FieldInput
+                                    key={field.id}
+                                    field={field}
+                                    index={index}
+                                    isLast={index === filteredFields.length - 1}
+                                    onFieldChange={handleFieldChange}
+                                    onLabelChange={handleLabelChange}
+                                    onFieldMove={handleFieldMove}
+                                    onRemoveCustomField={removeCustomField}
+                                    fieldGroupIds={groupIds} // Pass the list of IDs in this step for move logic
                                 />
                             ))}
                         </div>
                         <button
                             onClick={addCustomField}
-                            className="mt-6 w-full px-4 py-2 text-base font-medium text-violet-700 bg-violet-100 rounded-lg hover:bg-violet-200 transition duration-150 shadow-sm"
+                            // Enhanced button styling remains: primaryBgClass, primaryBgHoverClass
+                            className={`mt-6 w-full px-8 py-3 text-base font-medium text-white ${primaryBgClass} rounded-xl ${primaryBgHoverClass} transition duration-150 shadow-xl`}
                         >
                             + Add Custom Field
                         </button>
@@ -983,9 +1092,10 @@ const BiodataGenerator: React.FC = () => {
                             <button
                                 onClick={generatePdf}
                                 disabled={isGenerating || !isLibrariesLoaded}
-                                className={`w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-xl text-white transition-all duration-200 ${(!isLibrariesLoaded || isGenerating)
+                                // Enhanced button styling remains: primaryBgClass, primaryBgHoverClass
+                                className={`w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl shadow-xl text-white transition-all duration-200 ${(!isLibrariesLoaded || isGenerating)
                                     ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:ring-offset-2'
+                                    : 'bg-fuchsia-600 hover:bg-fuchsia-700 focus:ring-4 focus:ring-fuchsia-500 focus:ring-offset-2'
                                     }`}
                             >
                                 {!isLibrariesLoaded ? (
@@ -1023,6 +1133,8 @@ const BiodataGenerator: React.FC = () => {
         }
     };
 
+    const STEP_LABELS = ['Template', 'Personal Info', 'Family Info', 'Contact'];
+
     // --- Main Render ---
     return (
         <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-inter">
@@ -1030,20 +1142,20 @@ const BiodataGenerator: React.FC = () => {
 
                 {/* Left Column: Wizard Controls and Steps (60%) */}
                 <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg h-fit order-2 lg:order-1">
-                    {/* Step Indicator (Unchanged) */}
+                    {/* Step Indicator (Updated to 4 steps and controlled visibility) */}
                     <div className="flex justify-between items-center mb-8 space-x-2">
-                        {[1, 2, 3].map((s) => (
+                        {[1, 2, 3, 4].map((s) => (
                             <React.Fragment key={s}>
-                                <div className={`flex-1 flex flex-col items-center relative z-10 ${s <= step ? 'text-violet-600' : 'text-gray-400'}`}>
-                                    <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold border-2 transition-all duration-300 ${s <= step ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-gray-300'}`}>
+                                <div className={`flex-1 flex flex-col items-center relative z-10 ${s <= step ? 'text-fuchsia-600' : 'text-gray-400'}`}>
+                                    <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold border-2 transition-all duration-300 ${s <= step ? 'bg-fuchsia-600 border-fuchsia-600 text-white' : 'bg-white border-gray-300'}`}>
                                         {s}
                                     </div>
-                                    <span className={`mt-2 text-xs font-medium text-center ${s <= step ? 'text-violet-700' : 'text-gray-500'}`}>
-                                        {s === 1 ? 'Template' : s === 2 ? 'Images' : 'Content & Download'}
+                                    <span className={`mt-2 text-xs font-medium text-center ${s <= step ? 'text-fuchsia-700' : 'text-gray-500'}`}>
+                                        {STEP_LABELS[s - 1]}
                                     </span>
                                 </div>
                                 {s < TOTAL_STEPS && (
-                                    <div className={`flex-auto border-t-2 h-0 transition-all duration-300 ${s < step ? 'border-violet-400' : 'border-gray-200'}`}></div>
+                                    <div className={`flex-auto border-t-2 h-0 transition-all duration-300 ${s < step ? 'border-fuchsia-400' : 'border-gray-200'}`}></div>
                                 )}
                             </React.Fragment>
                         ))}
@@ -1054,25 +1166,27 @@ const BiodataGenerator: React.FC = () => {
                         {renderStepContent()}
                     </div>
 
-                    {/* Navigation Buttons (Unchanged) */}
+                    {/* Navigation Buttons (Updated styling) */}
                     <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
                         <button
                             onClick={handlePrev}
                             disabled={step === 1}
-                            className="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150"
+                            // Neutral style for secondary action (Previous)
+                            className="px-8 py-3 border border-gray-300 rounded-xl shadow-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150"
                         >
                             ← Previous
                         </button>
                         {step < TOTAL_STEPS ? (
                             <button
                                 onClick={handleNext}
-                                className="px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition duration-150"
+                                // Primary style for key action (Next)
+                                className={`px-8 py-3 border border-transparent rounded-xl shadow-xl text-sm font-medium text-white ${primaryBgClass} ${primaryBgHoverClass} transition duration-150`}
                             >
                                 Next Step →
                             </button>
                         ) : (
                             <div className="text-sm text-gray-500 flex items-center">
-                                Done Editing
+                                Final Step: Download
                             </div>
                         )}
                     </div>
@@ -1086,7 +1200,7 @@ const BiodataGenerator: React.FC = () => {
                     >
                         <div className="bg-white p-4 rounded-xl shadow-lg">
                             <h3 className="text-xl font-semibold text-gray-800 text-center mb-1">
-                                Live Preview
+                                Live Preview (A4 Sim.)
                             </h3>
 
                             {/* Page Counter and Navigation */}
@@ -1099,7 +1213,7 @@ const BiodataGenerator: React.FC = () => {
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" /></svg>
                                 </button>
                                 <span>
-                                    Page <span className="text-violet-600 font-bold">{currentPageIndex + 1}</span> of <span className="font-bold">{totalPages}</span>
+                                    Page <span className="text-fuchsia-600 font-bold">{currentPageIndex + 1}</span> of <span className="font-bold">{totalPages}</span>
                                 </span>
                                 <button
                                     onClick={() => setCurrentPageIndex(prev => Math.min(totalPages - 1, prev + 1))}
