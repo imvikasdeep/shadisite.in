@@ -35,7 +35,12 @@ const FIELD_GAP = 8;
 const LINE_HEIGHT = 14;
 const FONT_SIZE = 10;
 
+// Drawing configuration for headings
+const HEADING_FONT_SIZE = 14;
+const HEADING_LINE_GAP = 10; // Space above and below line
+
 // Derived constants
+// CONTENT_START_Y needs to accommodate space for the first heading on page 1
 const CONTENT_START_Y = PADDING + 175;
 const MAX_CONTENT_Y = CANVAS_HEIGHT - PADDING - 25;
 
@@ -51,12 +56,17 @@ const PLACEHOLDER_LOGO_URL = "https://placehold.co/60x60/ffffff/5c4b51?text=Logo
 
 // --- INTERFACES & TYPES ---
 type FieldType = 'mandatory' | 'custom';
+type CanonicalGroupId = 'personal' | 'family' | 'contact' | 'other';
+
+// Updated groupId to include specific groups for custom fields
+type FieldGroupId = 'personal' | 'family' | 'contact' | 'custom-personal' | 'custom-family' | 'custom';
 
 interface BiodataField {
-    id: string;
-    label: string;
-    value: string;
+    id: string; // Unique ID (e.g., 'dob-0', 'custom-12345')
+    label: string; // The single label for this line item (e.g., 'Date of Birth')
+    value: string; // The single value for this line item (e.g., '01 Jan 1995')
     type: FieldType;
+    groupId: FieldGroupId;
 }
 
 interface Template {
@@ -73,105 +83,156 @@ interface ImageState {
 
 interface PageInfo {
     fields: BiodataField[]; // Fields to be drawn on this specific page
+    // NEW: Tracks the group ID of the last item on the *previous* page to prevent repeating headings
+    prevPageEndGroup: CanonicalGroupId | null;
 }
 
-// --- INITIAL DATA & STEP GROUPINGS ---
+// Mapping the actual group IDs to a canonical group ID for grouping logic
+const getCanonicalGroupId = (groupId: FieldGroupId): CanonicalGroupId => {
+    if (groupId.includes('personal')) return 'personal';
+    if (groupId.includes('family')) return 'family';
+    if (groupId.includes('contact') || groupId === 'custom') return 'contact';
+    return 'other';
+};
 
-// Default color remains vibrant pink
-const DEFAULT_PRIMARY_COLOR = '#ea268e';
+// Titles for the sections as requested by the user
+const GROUP_TITLES: Record<'personal' | 'family' | 'contact', string> = {
+    'personal': 'Personal Details',
+    'family': 'Family Details',
+    'contact': 'Contact & Other Details',
+};
 
+
+// --- INITIAL DATA & STEP GROUPINGS (COMPLEX STRUCTURE) ---
+
+interface ComplexField {
+    id: string;
+    label: string;
+    value: string;
+    group: 'personal' | 'family' | 'contact';
+}
+
+const INITIAL_COMPLEX_FIELDS: ComplexField[] = [
+    // Step 2: Personal Details (Group: 'personal')
+    { id: 'name', label: 'Full Name', value: 'Jane Doe', group: 'personal' },
+    { id: 'dob', label: 'Date of Birth / Age', value: '01 Jan 1995 / 30 Years', group: 'personal' },
+    { id: 'height', label: 'Height / Weight', value: '5 ft 6 in / 55 kg', group: 'personal' },
+    { id: 'education', label: 'Education', value: 'M.S. Computer Science, Stanford University', group: 'personal' },
+    { id: 'occupation', label: 'Occupation', value: 'Senior Software Engineer at Google', group: 'personal' },
+    { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, hiking, painting, playing piano, and cooking new international cuisines. These interests define my personality and are important to me.', group: 'personal' },
+    { id: 'religion', label: 'Religion / Caste / Gotra', value: 'Hindu / Brahmin / Kaundinya', group: 'personal' },
+
+    // Step 3: Family Details (Group: 'family')
+    { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Retired IAS Officer', group: 'family' },
+    { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Mary Doe / Homemaker', group: 'family' },
+    { id: 'siblings', label: 'Siblings', value: 'One elder brother (married, settled in USA), one younger sister (studying medicine).', group: 'family' },
+    { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear family with modern values and a traditional root. We are closely knit and supportive.', group: 'family' },
+    // Partner Preferences (Long field to test pagination)
+    { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: 'Seeking a highly educated, ambitious, and caring partner from a similar background. Must be kind-hearted, respectful, and value family above all. Location preference is flexible, but must be willing to settle internationally. Seeking someone who enjoys travel and exploration, and is ready for long-term commitment. This detail is very important for a match. The ideal partner should also have a great sense of humor and enjoy quiet evenings at home as much as exciting trips. This field is intentionally made long to ensure that the new, higher-density layout correctly handles wrapping and pagination across the pages.', group: 'family' },
+
+    // Step 4: Contact & Other Details (Group: 'contact')
+    { id: 'contact', label: 'Contact Details', value: 'Email: jane.doe@example.com | Phone: +1 123-456-7890 (Please contact after 7 PM IST)', group: 'contact' },
+    { id: 'appendix', label: 'Appendix Note', value: 'A detailed horoscope is available upon request. We believe in meeting the right person to forge a strong bond.', group: 'contact' },
+];
+
+/**
+ * Flattens the complex field structure into a list of single-line BiodataField objects.
+ */
+const flattenFields = (complexFields: ComplexField[]): BiodataField[] => {
+    const flatFields: BiodataField[] = [];
+
+    complexFields.forEach(cf => {
+        // Split labels and values by the '/' character
+        const labels = cf.label.split('/').map(s => s.trim());
+        const values = cf.value.split('/').map(s => s.trim());
+
+        const finalCount = Math.max(labels.length, values.length, 1);
+
+        for (let i = 0; i < finalCount; i++) {
+            const label = (labels[i] || '').replace(':', '').trim(); // Remove colon from label and trim
+            const value = (values[i] || '').trim();
+
+            if (label || value) {
+                flatFields.push({
+                    id: `${cf.id}-${i}`,
+                    label: label,
+                    value: value,
+                    type: 'mandatory',
+                    groupId: cf.group,
+                });
+            }
+        }
+    });
+    return flatFields;
+};
+
+// Generate the initial flat list of fields
+const initialFields: BiodataField[] = flattenFields(INITIAL_COMPLEX_FIELDS);
+
+const DEFAULT_PRIMARY_COLOR = '#ffffff';
+
+// --- UPDATED TEMPLATE CONFIGURATION ---
 const templates: Template[] = [
     {
         id: 'elegant',
-        name: 'Elegant Floral',
-        bgImageUrl: "https://placehold.co/500x707/f0f0f0/ea268e?text=Elegant+Floral+Background",
+        name: 'Elegant Ganesha',
+        // FIX: The previous URL was inaccessible due to CORS restrictions. Using a reliable themed placeholder.
+        bgImageUrl: "https://i.ibb.co/b5tzTZdZ/ganesha-royal-maroon-bg-7ffe3710.png",
         primaryColor: DEFAULT_PRIMARY_COLOR, // Vibrant Pink
     },
     {
         id: 'modern',
         name: 'Modern Geometric',
-        bgImageUrl: "https://placehold.co/500x707/e0e0e0/333333?text=Modern+Geometric+Background",
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://placehold.co/500x707/e0e0e0/333333",
         primaryColor: '#333333', // Dark Grey
     },
     {
         id: 'classic',
         name: 'Classic Minimal',
-        bgImageUrl: "https://placehold.co/500x707/ffffff/374151?text=Classic+Minimal+Background",
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://placehold.co/500x707/ffffff/374151",
         primaryColor: '#374151', // Deep Slate
     },
     {
         id: 'nature',
         name: 'Nature Green',
-        bgImageUrl: "https://placehold.co/500x707/f0fff0/059669?text=Nature+Green+Background",
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://placehold.co/500x707/f0fff0/059669",
         primaryColor: '#059669', // Emerald Green
     },
     {
         id: 'royal',
         name: 'Royal Maroon',
-        bgImageUrl: "https://placehold.co/500x707/f0e0e0/881337?text=Royal+Maroon+Background",
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://placehold.co/500x707/f0e0e0/881337",
         primaryColor: '#881337', // Deep Maroon
     },
 ];
-
-const initialFields: BiodataField[] = [
-    // Step 2: Personal Details
-    { id: 'name', label: 'Full Name', value: 'Jane Doe', type: 'mandatory' },
-    { id: 'dob', label: 'Date of Birth / Age', value: '01 Jan 1995 / 30 Years', type: 'mandatory' },
-    { id: 'height', label: 'Height / Weight', value: '5 ft 6 in / 55 kg', type: 'mandatory' },
-    { id: 'education', label: 'Education', value: 'M.S. Computer Science, Stanford University', type: 'mandatory' },
-    { id: 'occupation', label: 'Occupation', value: 'Senior Software Engineer at Google', type: 'mandatory' },
-    { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, hiking, painting, playing piano, and cooking new international cuisines. These interests define my personality and are important to me.', type: 'mandatory' },
-    { id: 'religion', label: 'Religion / Caste / Gotra', value: 'Hindu / Brahmin / Kaundinya', type: 'mandatory' },
-    // Step 3: Family Details
-    { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Retired IAS Officer', type: 'mandatory' },
-    { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Mary Doe / Homemaker', type: 'mandatory' },
-    { id: 'siblings', label: 'Siblings', value: 'One elder brother (married, settled in USA), one younger sister (studying medicine).', type: 'mandatory' },
-    { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear family with modern values and a traditional root. We are closely knit and supportive.', type: 'mandatory' },
-    // Partner Preferences (Long field to test pagination)
-    { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: 'Seeking a highly educated, ambitious, and caring partner from a similar background. Must be kind-hearted, respectful, and value family above all. Location preference is flexible, but must be willing to settle internationally. Seeking someone who enjoys travel and exploration, and is ready for long-term commitment. This detail is very important for a match. The ideal partner should also have a great sense of humor and enjoy quiet evenings at home as much as exciting trips. This field is intentionally made long to ensure that the new, higher-density layout correctly handles wrapping and pagination across the pages.', type: 'mandatory' },
-    // Step 4: Contact & Other Details
-    { id: 'contact', label: 'Contact Details', value: 'Email: jane.doe@example.com | Phone: +1 123-456-7890 (Please contact after 7 PM IST)', type: 'mandatory' },
-    { id: 'appendix', label: 'Appendix Note', value: 'A detailed horoscope is available upon request. We believe in meeting the right person to forge a strong bond.', type: 'mandatory' },
-    // Extra fields to test high density (Custom fields added at the end)
-    { id: 'extra1', label: 'Extra Field 1', value: 'This is an extra field added to test the new, highly dense content layout and ensure all content fits appropriately across multiple pages as needed.', type: 'custom' },
-    { id: 'extra2', label: 'Extra Field 2', value: 'This field also helps verify the spacing and line breaks are accurate with the new, tighter $10 \text{px}$ font and $14 \text{px}$ line height. The goal is to maximize the content on the A4 page simulation.', type: 'custom' },
-    { id: 'extra3', label: 'Extra Field 3', value: 'Another line of information to push the content down and confirm the pagination logic is correctly splitting the fields based on the smaller, tighter pixel requirements.', type: 'custom' },
-    { id: 'extra4', label: 'Extra Field 4', value: 'Final check to see how much content we can comfortably fit on the first page before triggering the second page, achieving the density you expected.', type: 'custom' },
-
-];
-
-const PERSONAL_INFO_IDS = ['name', 'dob', 'height', 'education', 'occupation', 'hobbies', 'religion'];
-const FAMILY_INFO_IDS = ['father', 'mother', 'siblings', 'familyType', 'partnerPref'];
-const CONTACT_OTHER_IDS = ['contact', 'appendix']; // These plus any custom field added are for step 4
+// ------------------------------------
 
 
 // --- EXTERNAL SCRIPT LOADING HOOK (FIX for PDF Library Not Found) ---
-/**
- * Custom hook to dynamically load external scripts and wait for a global variable to be defined.
- */
+
 const useExternalScript = (url: string, globalVariableName: string) => {
     const [isLoaded, setIsLoaded] = useState(false);
-    
-    // Assert window as a Record<string, unknown> to allow dynamic property access
+
     const globalScope = globalThis as Record<string, unknown>;
 
     useEffect(() => {
-        // 1. Check if already loaded
         const globalRef = globalScope[globalVariableName];
         if (globalRef) {
             setIsLoaded(true);
             return;
         }
 
-        // 2. Dynamically load script
         const script = document.createElement('script');
         script.src = url;
         script.async = true;
         document.body.appendChild(script);
 
-        // 3. Polling check for loaded status (more robust than just onload)
         let attempts = 0;
-        const maxAttempts = 50; // Check for up to 5 seconds
+        const maxAttempts = 50;
         const checkLoad = () => {
             const globalRef = globalScope[globalVariableName];
             if (globalRef) {
@@ -185,23 +246,19 @@ const useExternalScript = (url: string, globalVariableName: string) => {
             }
         };
 
-        // Start check immediately after appending (and on load event)
         script.onload = () => {
-            // Give a slight delay after onload completes
-            setTimeout(checkLoad, 50); 
+            setTimeout(checkLoad, 50);
         };
         script.onerror = () => {
             console.error(`Script loading error for: ${url}`);
             setIsLoaded(false);
         };
 
-        // Also start a check shortly after execution begins
         setTimeout(checkLoad, 200);
 
         return () => {
-            // Cleanup script tag on component unmount
             if (document.body.contains(script)) {
-                 document.body.removeChild(script);
+                document.body.removeChild(script);
             }
         };
     }, [url, globalVariableName]);
@@ -215,17 +272,15 @@ const useExternalScript = (url: string, globalVariableName: string) => {
 
 /**
  * Counts the number of lines a piece of text will wrap into, given a maxWidth.
- * @returns The total number of lines.
  */
 const countWrappedTextLines = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): number => {
     const words = text.split(' ');
     let line = '';
 
-    // If text is empty or only whitespace, it consumes 0 lines of content
     if (text.trim() === '') return 0;
 
     let lineCount = 1;
-    ctx.font = `${FONT_SIZE}px Inter, sans-serif`; // Ensure correct font size for measurement
+    ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
 
     for (let n = 0; n < words.length; n++) {
         const testLine = line + words[n] + ' ';
@@ -242,60 +297,70 @@ const countWrappedTextLines = (ctx: CanvasRenderingContext2D, text: string, maxW
     return lineCount;
 }
 
-// --- PAGINATION CALCULATION CORE (Runs on client-side only) ---
+// --- PAGINATION CALCULATION CORE ---
 
 /**
  * Pre-calculates the field distribution across pages by simulating drawing height.
+ * This is crucial for determining where page breaks occur and if a heading is needed.
  */
 const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
     if (typeof document === 'undefined') return [];
 
     const pages: PageInfo[] = [];
-
-    // 1. Filter out fields that have no value (they consume no space)
-    const contentFields = fields.filter(f => f.value.trim() !== '');
+    const contentFields = fields.filter(f => f.label.trim() !== '');
     let remainingFields = [...contentFields];
 
 
-    // Use a dummy canvas for accurate text measurement 
     const dummyCanvas = document.createElement('canvas');
     const ctx = dummyCanvas.getContext('2d');
     if (!ctx) return [];
     ctx.scale(DPI_SCALE, DPI_SCALE);
-    // Set the simulation font size for accurate wrapping measurement
     ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
 
-    // Helper to calculate space consumed by a field
-    const calculateFieldConsumption = (field: BiodataField): number => {
+    // Helper to calculate space consumed by a field or a heading
+    const calculateConsumption = (field: BiodataField, lastGroupId: CanonicalGroupId | null): number => {
+        let height = 0;
+        const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
-        // 1. Calculate how many lines the Value text will wrap into.
+        // Heading logic: Draw only if the group has genuinely changed from the last drawn/referenced item.
+        // This ensures headings are not repeated if a section breaks across pages.
+        if (currentCanonicalGroupId !== lastGroupId && currentCanonicalGroupId !== 'other') {
+            height += 25; // Space above the decorative line
+            height += HEADING_FONT_SIZE + HEADING_LINE_GAP + 10; // Heading text and space below
+        }
+
+        // Calculate space consumed by the field content
         const valueLineCount = countWrappedTextLines(ctx, field.value, VALUE_COL_WIDTH);
-
-        // The total vertical space taken by the text block is determined by the number of wrapped value lines, 
-        // since the label is always 1 line. If valueLineCount is 0, the height is 0. 
-        // If valueLineCount is 1 or more, the effective line count is max(1, valueLineCount).
-        const textLines = Math.max(1, valueLineCount); // At least 1 line for the label if there's a label
-
-        // Text Block Height = (Number of lines) * LINE_HEIGHT
+        const textLines = Math.max(1, valueLineCount);
         const textBlockHeight = textLines * LINE_HEIGHT;
 
-        // Total consumption: Text Block Height + Spacing (FIELD_GAP)
-        return textBlockHeight + FIELD_GAP;
+        // Add field consumption: Text Block Height + Spacing (FIELD_GAP)
+        height += textBlockHeight + FIELD_GAP;
+
+        return height;
     };
 
 
     while (remainingFields.length > 0) {
-        // Page 1 start is CONTENT_START_Y. Subsequent pages start at PADDING + FIELD_GAP.
+        let pageFields: BiodataField[] = [];
+
+        // Determine the canonical group ID of the last field from the previous page, or null if it's page 1
+        const prevPageEndGroup = pages.length > 0
+            ? getCanonicalGroupId(pages[pages.length - 1].fields.slice(-1)[0].groupId)
+            : null;
+
+        // The group ID used to check if the FIRST field on the NEW page needs a heading drawn above it.
+        let lastGroupIdDrawnOrReferenced = prevPageEndGroup;
+
+        // Page 1 starts at CONTENT_START_Y. Subsequent pages start at PADDING + FIELD_GAP.
         let currentY = pages.length === 0 ? CONTENT_START_Y : PADDING + FIELD_GAP;
-        const pageFields: BiodataField[] = [];
 
         for (let i = 0; i < remainingFields.length; i++) {
             const field = remainingFields[i];
 
-            // Calculate the total height this field will consume
-            const requiredHeight = calculateFieldConsumption(field);
+            // Use the determined reference group ID for consumption calculation
+            const requiredHeight = calculateConsumption(field, lastGroupIdDrawnOrReferenced);
 
-            // The position the Y cursor will be at AFTER drawing this field and the gap
             const nextCalculatedY = currentY + requiredHeight;
 
             // Check for page overflow. If it doesn't fit and we already drew fields on this page, break to a new page.
@@ -306,17 +371,17 @@ const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
             // If it fits 
             pageFields.push(field);
             currentY = nextCalculatedY;
+            // Update the last group ID *drawn/processed* on this page
+            lastGroupIdDrawnOrReferenced = getCanonicalGroupId(field.groupId);
         }
 
         // Add the fields collected for this page
         if (pageFields.length > 0) {
-            pages.push({ fields: pageFields });
-            // Update remaining fields for the next iteration
+            pages.push({ fields: pageFields, prevPageEndGroup: prevPageEndGroup });
             remainingFields = remainingFields.slice(pageFields.length);
         } else if (remainingFields.length > 0) {
-            console.error("Pagination failed to place a field. This indicates a field is taller than a whole page.");
-            // If we couldn't place any field, force it onto the page anyway (shouldn't happen with the current field structure)
-            pages.push({ fields: remainingFields });
+            console.error("Pagination failed to place a field.");
+            pages.push({ fields: remainingFields, prevPageEndGroup: prevPageEndGroup });
             remainingFields = [];
         }
     }
@@ -334,10 +399,9 @@ const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
 const wrapTextAndGetLastY = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
     const words = text.split(' ');
     let line = '';
-    let lineY = y; // Start at the initial Y baseline
+    let lineY = y;
 
-    // If text is empty, return the starting Y
-    if (text.trim() === '') return y;
+    if (text.trim() === '') return y - lineHeight;
 
     for (let n = 0; n < words.length; n++) {
         const testLine = line + words[n] + ' ';
@@ -347,14 +411,12 @@ const wrapTextAndGetLastY = (ctx: CanvasRenderingContext2D, text: string, x: num
         if (testWidth > maxWidth && n > 0) {
             ctx.fillText(line.trim(), x, lineY);
             line = words[n] + ' ';
-            lineY += lineHeight; // Move down for the next line
+            lineY += lineHeight;
         } else {
             line = testLine;
         }
     }
-    // Draw the last line
     ctx.fillText(line.trim(), x, lineY);
-    // Return the baseline Y of the *last line drawn*.
     return lineY;
 }
 
@@ -367,7 +429,9 @@ const drawContentForPage = (
     template: Template,
     logo: ImageState,
     photo: ImageState,
-    pageNumber: number = 1
+    pageNumber: number = 1,
+    // NEW: The group ID of the last item on the previous page
+    prevPageEndGroup: CanonicalGroupId | null = null
 ) => {
 
     const width = CANVAS_WIDTH;
@@ -375,15 +439,14 @@ const drawContentForPage = (
     let currentY = PADDING + 10;
 
     // 1. Draw Background
-    ctx.fillStyle = template.primaryColor + '1A';
-    ctx.fillRect(0, 0, width, height);
+    // NOTE: The main background drawing is handled in the useEffect hook in BiodataPreview
+    // and correctly applies the image or a fallback color.
 
     // 2. Page Indicator
     ctx.font = `12px Inter, sans-serif`;
     ctx.fillStyle = template.primaryColor;
     ctx.textAlign = 'center';
-    // Anchored 10px above the bottom padding line
-    ctx.fillText(`- Page ${pageNumber} -`, width / 2, height - PADDING + 55); // Adjusted Y for new PADDING
+    ctx.fillText(`- Page ${pageNumber} -`, width / 2, height - PADDING + 55);
 
     if (pageNumber === 1) {
         // --- 3. Header Elements (Only on Page 1) ---
@@ -394,7 +457,7 @@ const drawContentForPage = (
         // Photo Border/Background
         ctx.fillStyle = template.primaryColor;
         ctx.fillRect(width - PADDING - photoWidth, PADDING, photoWidth, photoHeight);
-        ctx.fillStyle = '#ffffff'; // Inner white background
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(width - PADDING - photoWidth + 2, PADDING + 2, photoWidth - 4, photoHeight - 4);
 
         // Logo
@@ -404,22 +467,18 @@ const drawContentForPage = (
 
         // Photo
         if (photo.object) {
-            // Draw photo slightly inset from the border
             ctx.drawImage(photo.object, width - PADDING - photoWidth + 2, PADDING + 2, photoWidth - 4, photoHeight - 4);
         }
 
         // Title/Name
         ctx.textAlign = 'left';
-        // Title font size is slightly larger than content font size
         ctx.font = `32px bold Inter, sans-serif`;
         ctx.fillStyle = template.primaryColor;
 
-        // Find the 'name' field regardless of which step it's currently in
-        const nameField = initialFields.find(f => f.id === 'name');
+        const nameField = initialFields.find(f => f.id === 'name-0');
         let nameText = 'BIO-DATA';
 
         if (nameField) {
-            // Only take the first three words if too long for the title area
             nameText = nameField.value.split(' ').slice(0, 3).join(' ').toUpperCase();
         }
 
@@ -435,10 +494,60 @@ const drawContentForPage = (
     // --- 4. Draw Fields for this Page (Side-by-Side) ---
     ctx.textAlign = 'left';
     const labelX = PADDING;
-    const valueX = VALUE_COL_OFFSET; // 160px offset
-    const valueWidth = VALUE_COL_WIDTH; // 260px width for value
+    const valueX = VALUE_COL_OFFSET;
+    const valueWidth = VALUE_COL_WIDTH;
+
+    // Used to track group changes and only draw a heading when the group changes
+    let lastCanonicalGroupId: CanonicalGroupId | null;
+
+    // Set the initial reference group ID based on the previous page's end (if applicable)
+    if (pageNumber === 1) {
+        lastCanonicalGroupId = 'other'; // Page 1 always starts fresh after header
+    } else {
+        // Subsequent pages: Start tracking from the group of the last item on the previous page
+        // This prevents redrawing the heading if the section continues
+        lastCanonicalGroupId = prevPageEndGroup || 'other';
+    }
+
 
     pageFields.forEach((field) => {
+        const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
+
+        // --- Insert Heading if Section Changes ---
+        // Check if the group ID is different from the last one we drew/referenced AND it's a non-placeholder group
+        if (currentCanonicalGroupId !== lastCanonicalGroupId && currentCanonicalGroupId !== 'other') {
+
+            const headingText = GROUP_TITLES[currentCanonicalGroupId];
+
+            if (headingText) {
+                // Add space above the decorative line
+                currentY += 25;
+
+                // Draw decorative line above the heading
+                ctx.strokeStyle = template.primaryColor + 'AA';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(PADDING, currentY);
+                ctx.lineTo(width - PADDING, currentY);
+                ctx.stroke();
+
+                // Move Y down for the heading text baseline
+                currentY += HEADING_LINE_GAP;
+
+                // Draw Heading Text
+                ctx.font = `${HEADING_FONT_SIZE}px bold Inter, sans-serif`;
+                ctx.fillStyle = template.primaryColor;
+                ctx.fillText(headingText.toUpperCase(), PADDING, currentY);
+
+                // Move Y down past the heading text
+                currentY += HEADING_FONT_SIZE + 10; // Extra space after the heading
+            }
+
+            // IMPORTANT: Update the last group ID drawn *only* after drawing the heading
+            lastCanonicalGroupId = currentCanonicalGroupId;
+        }
+        // --- End Heading Logic ---
+
 
         // 1. Draw Label
         ctx.font = `${FONT_SIZE}px bold Inter, sans-serif`;
@@ -450,25 +559,23 @@ const drawContentForPage = (
 
         // 2. Draw Value (starts side-by-side with label, wraps underneath the value column)
         ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
-        ctx.fillStyle = '#1f2937'; // dark gray
+        ctx.fillStyle = '#1f2937';
         const displayValue = field.value;
 
         // lastValueLineY is the baseline Y of the last line of value text drawn
         const lastValueLineY = wrapTextAndGetLastY(ctx, displayValue, valueX, currentY, valueWidth, LINE_HEIGHT);
 
         // 3. Determine the baseline position for the next content block.
-        // We take the last baseline drawn and add one LINE_HEIGHT to get the Y *after* the content block.
         const nextYAfterTextBlock = lastValueLineY + LINE_HEIGHT;
 
         // 4. Draw a separator line
         ctx.strokeStyle = template.primaryColor + '33';
         ctx.beginPath();
-        // Separator Y: Halfway between the last line of text and the next line start
         ctx.moveTo(labelX, nextYAfterTextBlock - LINE_HEIGHT / 2);
         ctx.lineTo(width - PADDING, nextYAfterTextBlock - LINE_HEIGHT / 2);
         ctx.stroke();
 
-        // 5. Move Y cursor for the next field: nextYAfterTextBlock + FIELD_GAP
+        // 5. Move Y cursor for the next field
         currentY = nextYAfterTextBlock + FIELD_GAP;
     });
 };
@@ -482,9 +589,11 @@ interface BiodataPreviewProps {
     logo: ImageState;
     photo: ImageState;
     pageNumber: number;
+    // NEW: Passed down to control heading drawing
+    prevPageEndGroup: CanonicalGroupId | null;
 }
 
-const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, photo, pageNumber }, ref) => {
+const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, photo, pageNumber, prevPageEndGroup }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const setRefs = useCallback((node: HTMLCanvasElement | null) => {
@@ -503,7 +612,6 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Set canvas resolution for high DPI
         canvas.width = CANVAS_WIDTH * DPI_SCALE;
         canvas.height = CANVAS_HEIGHT * DPI_SCALE;
         canvas.style.width = `${CANVAS_WIDTH}px`;
@@ -512,30 +620,25 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Scale context down so drawing operations work on logical pixels (500x707)
         ctx.scale(DPI_SCALE, DPI_SCALE);
-
-        // Clear the canvas before redrawing
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // This function handles the async nature of image loading.
         const drawBackgroundAndContent = () => {
-            // Redraw Background
             const bgImg = new Image();
             bgImg.crossOrigin = 'anonymous';
             bgImg.src = template.bgImageUrl;
 
             const drawPage = (img: HTMLImageElement | null) => {
+                // Draw the full background image (if loaded)
                 if (img) {
                     ctx.drawImage(img, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 } else {
-                    // Fallback to solid color
+                    // Fallback to solid color if image fails to load
                     ctx.fillStyle = template.primaryColor + '1A';
                     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 }
 
-                // Draw the specific page content
-                drawContentForPage(ctx, pageContent.fields, template, logo, photo, pageNumber);
+                drawContentForPage(ctx, pageContent.fields, template, logo, photo, pageNumber, prevPageEndGroup);
             }
 
             if (bgImg.complete) {
@@ -548,13 +651,12 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
         drawBackgroundAndContent();
 
-    }, [pageContent, template, logo.object, photo.object, pageNumber]);
+    }, [pageContent, template, logo.object, photo.object, pageNumber, prevPageEndGroup]);
 
 
     return (
         <div
             id="biodata-preview-container"
-            // Adjusted styling to better resemble a tall, standard piece of paper
             className={`shadow-2xl rounded-sm transition-all duration-300 border-4 border-gray-100 bg-white text-gray-800`}
             style={{
                 width: `${CANVAS_WIDTH}px`,
@@ -570,7 +672,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
 BiodataPreview.displayName = 'BiodataPreview';
 
-// --- FieldInput Component (Moved outside and memoized for focus stability) ---
+// --- FieldInput Component ---
 
 interface FieldInputProps {
     field: BiodataField;
@@ -580,7 +682,6 @@ interface FieldInputProps {
     onLabelChange: (id: string, newLabel: string) => void;
     onFieldMove: (id: string, direction: 'up' | 'down') => void;
     onRemoveCustomField: (id: string) => void;
-    // New prop to limit reordering scope
     fieldGroupIds: string[];
 }
 
@@ -603,61 +704,53 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
         onLabelChange(field.id, e.target.value);
     };
 
-    // Calculate if up/down movement is allowed within the current visible group
     const currentGroupIndex = fieldGroupIds.findIndex(id => id === field.id);
     const isFirstInGroup = currentGroupIndex === 0;
     const isLastInGroup = currentGroupIndex === fieldGroupIds.length - 1;
 
 
     return (
-        // Enhanced field wrapper styling
-        <div className="flex items-start space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200">
+        <div
+            id={`field-input-${field.id}`}
+            className="flex items-start space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200"
+        >
             <div className="flex flex-col space-y-1 mt-1 flex-shrink-0">
-                {/* UP Button: Disable if it's the first in the visible group */}
                 <button
                     type="button"
                     onClick={() => onFieldMove(field.id, 'up')}
                     disabled={isFirstInGroup}
-                    // Retaining text-pink-500 for move buttons as a highlight color
                     className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded-full transition duration-150"
                     title="Move Up"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" /></svg>
                 </button>
-                {/* DOWN Button: Disable if it's the last in the visible group */}
                 <button
                     type="button"
                     onClick={() => onFieldMove(field.id, 'down')}
                     disabled={isLastInGroup}
-                    // Retaining text-pink-500 for move buttons as a highlight color
                     className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded-full transition duration-150"
                     title="Move Down"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
                 </button>
             </div>
-            {/* New responsive side-by-side layout for label and value */}
             <div className="flex-1 min-w-0 flex flex-col md:flex-row md:space-x-4">
-                {/* Label Input (Wider on mobile, 40% on desktop) */}
                 <div className="w-full md:w-2/5 mb-2 md:mb-0">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Field Label</label>
                     <input
                         type="text"
                         value={field.label}
                         onChange={handleLabelInput}
-                        // Added focus ring and thicker border for polish
                         className="w-full text-sm font-semibold p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
                         placeholder="e.g., Full Name"
                     />
                 </div>
-                {/* Value Input (Wider on mobile, 60% on desktop) */}
                 <div className="w-full md:w-3/5">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Field Value</label>
                     <textarea
                         value={field.value}
                         onChange={handleValueChange}
                         rows={field.value.length > 50 ? 3 : 1}
-                        // Added focus ring and thicker border for polish
                         className="w-full text-sm p-2 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
                         placeholder="e.g., Jane Doe / 30 Years"
                     />
@@ -667,7 +760,7 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                 <button
                     type="button"
                     onClick={() => onRemoveCustomField(field.id)}
-                    className="p-2 mt-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 transition duration-150 self-start" // self-start to align with the top
+                    className="p-2 mt-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 transition duration-150 self-start"
                     title="Remove Custom Field"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
@@ -690,28 +783,30 @@ const BiodataGenerator: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
     const [step, setStep] = useState(1);
-    const [highestStepVisited, setHighestStepVisited] = useState(1); // NEW: Track highest visited step
-    
+    const [highestStepVisited, setHighestStepVisited] = useState(1);
+
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [lastAddedFieldId, setLastAddedFieldId] = useState<string | null>(null);
+
     // Define theme variables
     const primaryTextClass = "text-fuchsia-600";
     const primaryBgClass = "bg-fuchsia-600";
     const primaryBgHoverClass = "hover:bg-fuchsia-700";
     const primaryRingClass = "ring-fuchsia-200";
     const primaryBorderClass = "border-fuchsia-600";
-    const lightBgClass = "bg-fuchsia-50"; 
-    
+    const lightBgClass = "bg-fuchsia-50";
 
-    // NEW: Use the robust external script loader
+
     const isJsPdfLoaded = useExternalScript(
-        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", 
-        'jspdf' // Check for the global 'jspdf' object
-    ); 
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        'jspdf'
+    );
     const isHtml2CanvasLoaded = useExternalScript(
-        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", 
+        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
         'html2canvas'
     );
     const isLibrariesLoaded = isJsPdfLoaded && isHtml2CanvasLoaded;
-    
+
     const [pageContentMap, setPageContentMap] = useState<PageInfo[]>([]);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
@@ -724,7 +819,6 @@ const BiodataGenerator: React.FC = () => {
 
 
     // --- Pagination Calculation (Client-side only) ---
-    // Recalculated whenever fields or layout constants (like font size) change.
     useEffect(() => {
         const pages = calculatePagination(fields);
         setPageContentMap(pages);
@@ -736,8 +830,26 @@ const BiodataGenerator: React.FC = () => {
     }, [fields]);
 
 
+    // Effect to scroll the field list when a new custom field is added
+    useEffect(() => {
+        if (lastAddedFieldId && scrollRef.current) {
+
+            const scrollToBottom = () => {
+                if (scrollRef.current) {
+                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                    setLastAddedFieldId(null);
+                }
+            };
+
+            setTimeout(scrollToBottom, 0);
+        }
+    }, [lastAddedFieldId]);
+
+
     const totalPages = pageContentMap.length;
-    const currentPageData = pageContentMap[currentPageIndex] || { fields: [] };
+    // Extract the page data and the previous group ID for drawing logic
+    const currentPageData = pageContentMap[currentPageIndex] || { fields: [], prevPageEndGroup: null };
+    const prevGroup = currentPageData.prevPageEndGroup;
 
 
     // Load initial placeholder images on mount
@@ -747,7 +859,7 @@ const BiodataGenerator: React.FC = () => {
         img.onload = () => setter({ url: src, object: img });
         img.onerror = () => setter({ url: src, object: null });
         img.src = src;
-    }, []);
+    }, [templates]);
 
     useEffect(() => {
         loadImage(PLACEHOLDER_LOGO_URL, setLogo);
@@ -760,12 +872,9 @@ const BiodataGenerator: React.FC = () => {
     }, [loadImage]);
 
     // Navigation handlers
-    // Changed 'handleNext' to use 'Continue' text (via props/rendering)
-    const handleNext = () => setStep(prev => Math.min(prev + 1, TOTAL_STEPS)); 
-    // Changed 'handlePrev' to use 'Back' text (via props/rendering)
-    const handlePrev = () => setStep(prev => Math.max(prev - 1, 1)); 
-    
-    // NEW: Function to handle step navigation from the indicator
+    const handleNext = () => setStep(prev => Math.min(prev + 1, TOTAL_STEPS));
+    const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
+
     const handleStepClick = (s: number) => {
         if (s <= highestStepVisited) {
             setStep(s);
@@ -775,20 +884,24 @@ const BiodataGenerator: React.FC = () => {
 
     // --- Optimized Field Handlers using useCallback for stability ---
 
-    // Utility function to get the list of field IDs for the current step
-    const getCurrentStepFieldIds = (currentStep: number): string[] => {
+    const getCurrentStepFieldIds = useCallback((currentStep: number): string[] => {
         switch (currentStep) {
             case 2:
-                return fields.filter(f => PERSONAL_INFO_IDS.includes(f.id)).map(f => f.id);
+                return fields
+                    .filter(f => f.groupId === 'personal' || f.groupId === 'custom-personal')
+                    .map(f => f.id);
             case 3:
-                return fields.filter(f => FAMILY_INFO_IDS.includes(f.id)).map(f => f.id);
+                return fields
+                    .filter(f => f.groupId === 'family' || f.groupId === 'custom-family')
+                    .map(f => f.id);
             case 4:
-                // Include all fields that are not in the first two groups
-                return fields.filter(f => !PERSONAL_INFO_IDS.includes(f.id) && !FAMILY_INFO_IDS.includes(f.id)).map(f => f.id);
+                return fields
+                    .filter(f => f.groupId === 'contact' || f.groupId === 'custom')
+                    .map(f => f.id);
             default:
                 return [];
         }
-    }
+    }, [fields]);
 
 
     const handleFieldChange = useCallback((id: string, value: string) => {
@@ -809,47 +922,62 @@ const BiodataGenerator: React.FC = () => {
 
     const handleFieldMove = useCallback((id: string, direction: 'up' | 'down') => {
         setFields(prevFields => {
-            // 1. Get the list of all IDs currently in the fields state.
-            const allFieldIds = prevFields.map(f => f.id);
-            // 2. Get the list of IDs for the current *visible* group.
             const currentGroupIds = getCurrentStepFieldIds(step);
-            
-            // 3. Find the index of the moving field in the *current group*
             const groupIndex = currentGroupIds.findIndex(groupId => groupId === id);
-            
+
             if (groupIndex === -1) return prevFields;
 
             const newGroupIndex = groupIndex + (direction === 'up' ? -1 : 1);
 
             if (newGroupIndex < 0 || newGroupIndex >= currentGroupIds.length) return prevFields;
 
-            // 4. Get the ID of the target field to swap with
             const targetId = currentGroupIds[newGroupIndex];
-
-            // 5. Find the *absolute* indices in the full fields array
-            const sourceAbsIndex = allFieldIds.indexOf(id);
-            const targetAbsIndex = allFieldIds.indexOf(targetId);
+            const sourceAbsIndex = prevFields.findIndex(f => f.id === id);
+            const targetAbsIndex = prevFields.findIndex(f => f.id === targetId);
 
             if (sourceAbsIndex === -1 || targetAbsIndex === -1) return prevFields;
 
-            // 6. Perform the swap on the full fields array
             const newFields = [...prevFields];
             [newFields[sourceAbsIndex], newFields[targetAbsIndex]] = [newFields[targetAbsIndex], newFields[sourceAbsIndex]];
 
             return newFields;
         });
-    }, [step, fields]); // Dependency on 'fields' is needed here to get latest group IDs
+    }, [step, getCurrentStepFieldIds]);
 
-    const addCustomField = () => {
-        const newId = `custom-${Date.now()}`;
+    /**
+     * Adds a new custom field to the specified group and ensures it is inserted 
+     * immediately after the last field currently visible in the current step.
+     */
+    const addCustomField = (groupType: 'personal' | 'family' | 'custom') => {
+        const newId = `custom-${groupType}-${Date.now()}`;
+
+        let targetGroupId: FieldGroupId;
+        if (groupType === 'personal') targetGroupId = 'custom-personal';
+        else if (groupType === 'family') targetGroupId = 'custom-family';
+        else targetGroupId = 'custom';
+
         const newField: BiodataField = {
             id: newId,
             label: 'New Custom Detail',
-            value: '', // Empty default value
+            value: '',
             type: 'custom',
+            groupId: targetGroupId,
         };
-        // Custom fields are always added to the end (Step 4's responsibility)
-        setFields(prevFields => [...prevFields, newField]);
+
+        setFields(prevFields => {
+            const currentStepIds = getCurrentStepFieldIds(step);
+            const lastVisibleId = currentStepIds[currentStepIds.length - 1];
+            const lastVisibleIndex = prevFields.findIndex(f => f.id === lastVisibleId);
+
+            const newFields = [...prevFields];
+
+            const insertIndex = (lastVisibleIndex !== -1) ? lastVisibleIndex + 1 : prevFields.length;
+            newFields.splice(insertIndex, 0, newField);
+
+            return newFields;
+        });
+
+        setLastAddedFieldId(newId);
     };
 
     const removeCustomField = useCallback((id: string) => {
@@ -879,9 +1007,8 @@ const BiodataGenerator: React.FC = () => {
         setGenerationStatus('loading');
         setIsGenerating(true);
 
-        // Robust check for jsPDF constructor
         const jsPDFConstructor = (window as any).jspdf ? (window as any).jspdf.jsPDF : (window as any).jsPDF;
-        
+
         if (typeof jsPDFConstructor === 'undefined' || typeof window.html2canvas === 'undefined') {
             setGenerationStatus('error');
             console.error("PDF generation failed: jsPDF or html2canvas library not found.");
@@ -890,13 +1017,10 @@ const BiodataGenerator: React.FC = () => {
         }
 
         try {
-            // New jsPDF instance: portrait ('p'), millimeters ('mm'), A4 format ('a4')
-            // Use the robustly found constructor
             const pdf = new jsPDFConstructor('p', 'mm', 'a4');
             const pdfWidth = 210; // A4 width in mm
-            const pdfHeight = CANVAS_HEIGHT * pdfWidth / CANVAS_WIDTH; // A4 height (297mm) based on aspect ratio of the canvas
+            const pdfHeight = CANVAS_HEIGHT * pdfWidth / CANVAS_WIDTH;
 
-            // Create a temporary, off-screen canvas for rendering each page
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = CANVAS_WIDTH * DPI_SCALE;
             tempCanvas.height = CANVAS_HEIGHT * DPI_SCALE;
@@ -944,7 +1068,8 @@ const BiodataGenerator: React.FC = () => {
                     selectedTemplate,
                     logo,
                     photo,
-                    pageNum
+                    pageNum,
+                    pageInfo.prevPageEndGroup
                 );
 
                 // 3. Add page to PDF
@@ -952,14 +1077,12 @@ const BiodataGenerator: React.FC = () => {
                     pdf.addPage();
                 }
 
-                // Get image data from the rendered canvas
                 const imgData = tempCanvas.toDataURL('image/png');
-                // Add the canvas image data to the PDF.
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             }
 
             // Save the PDF
-            pdf.save(`WeddingBiodata_${fields.find(f => f.id === 'name')?.value.replace(/\s/g, '_') || 'New'}.pdf`);
+            pdf.save(`WeddingBiodata_${fields.find(f => f.id === 'name-0')?.value.replace(/\s/g, '_') || 'New'}.pdf`);
 
             setGenerationStatus('success');
         } catch (error) {
@@ -1012,47 +1135,41 @@ const BiodataGenerator: React.FC = () => {
 
     const renderStepContent = () => {
         // Filter fields based on the current step group
-        let filteredFields: BiodataField[] = [];
-        let groupIds: string[] = [];
+        const groupIds = getCurrentStepFieldIds(step);
+        const filteredFields = fields.filter(f => groupIds.includes(f.id));
 
-        if (step === 2) {
-            groupIds = PERSONAL_INFO_IDS;
-            filteredFields = fields.filter(f => PERSONAL_INFO_IDS.includes(f.id));
-        } else if (step === 3) {
-            groupIds = FAMILY_INFO_IDS;
-            filteredFields = fields.filter(f => FAMILY_INFO_IDS.includes(f.id));
-        } else if (step === 4) {
-            // Step 4 includes Contact/Other and all dynamically added custom fields
-            groupIds = fields.filter(f => CONTACT_OTHER_IDS.includes(f.id) || f.type === 'custom').map(f => f.id);
-            filteredFields = fields.filter(f => groupIds.includes(f.id));
-        }
-
+        const addCustomButton = (groupType: 'personal' | 'family' | 'custom', label: string) => (
+            <div className="flex justify-end mt-6">
+                <button
+                    onClick={() => addCustomField(groupType)}
+                    // Button UI matches the 'Back' button style and is aligned to the right
+                    className="px-6 py-2 border border-gray-300 rounded-full text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition duration-150 cursor-pointer shadow-sm"
+                >
+                    {label}
+                </button>
+            </div>
+        );
 
         switch (step) {
             case 1:
                 return (
                     <>
-                        {/* Heading color is now black */}
                         <h2 className="text-2xl font-bold mb-4 text-black">Step 1: Template & Photo Setup</h2>
                         <p className="text-gray-600 mb-6">Select a visual theme and provide your photos.</p>
 
                         <div className="space-y-4 mb-8">
-                            {/* Removed 1A: from heading */}
                             <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Select Template</h3>
-                            {/* Flex wrap for better mobile responsiveness */}
-                            <div className="flex flex-wrap gap-4"> 
+                            <div className="flex flex-wrap gap-4">
                                 {templates.map((template) => (
                                     <div
                                         key={template.id}
                                         onClick={() => setSelectedTemplate(template)}
-                                        // Use w-1/3 or w-full to make templates fit nicely
                                         className={`w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.33%-12px)] p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${lightBgClass} 
                                             ${selectedTemplate.id === template.id
                                                 ? `${primaryBorderClass} ring-4 ${primaryRingClass}`
                                                 : 'border-gray-200 hover:border-fuchsia-400'
                                             }`}
                                     >
-                                        {/* Using inline style for exact color match on template name */}
                                         <div className="font-semibold text-sm text-center" style={{ color: template.primaryColor }}>{template.name}</div>
                                     </div>
                                 ))}
@@ -1081,14 +1198,18 @@ const BiodataGenerator: React.FC = () => {
             case 2:
             case 3:
                 const stepTitle = step === 2 ? 'Personal Info' : 'Family Info';
-                const stepSubtitle = step === 2 ? 'Customize your primary personal details like name, DOB, and occupation.' : 'Enter details about your family and your preferences for a partner.';
+                const stepSubtitle = step === 2 ? 'Customize your primary personal details and add custom entries for this section.' : 'Enter details about your family, preferences, and add custom entries specific to this section.';
+                const addGroup = step === 2 ? 'personal' : 'family';
+                const addLabel = step === 2 ? '+ Add More Personal Detail' : '+ Add More Family Detail';
+
                 return (
                     <>
-                        {/* Heading color is now black */}
                         <h2 className="text-2xl font-bold mb-4 text-black">Step {step}: Edit {stepTitle}</h2>
                         <p className="text-gray-600 mb-6">{stepSubtitle}</p>
-                        {/* Increased max height for better scrolling/editing space */}
-                        <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                        <div
+                            ref={scrollRef}
+                            className="space-y-2 max-h-[500px] overflow-y-auto pr-2"
+                        >
                             {filteredFields.map((field, index) => (
                                 <FieldInput
                                     key={field.id}
@@ -1099,22 +1220,24 @@ const BiodataGenerator: React.FC = () => {
                                     onLabelChange={handleLabelChange}
                                     onFieldMove={handleFieldMove}
                                     onRemoveCustomField={removeCustomField}
-                                    fieldGroupIds={groupIds} // Pass the list of IDs in this step for move logic
+                                    fieldGroupIds={groupIds}
                                 />
                             ))}
                         </div>
+                        {addCustomButton(addGroup as 'personal' | 'family', addLabel)}
                     </>
                 );
             case 4:
                 return (
                     <>
-                        {/* Heading color is now black */}
                         <h2 className="text-2xl font-bold mb-4 text-black">Step 4: Contact & Download</h2>
                         <p className="text-gray-600 mb-6">
                             Enter contact details, any final notes, and add **Custom Fields**. Use the download button below to generate your multi-page PDF.
                         </p>
-                        {/* Increased max height for better scrolling/editing space */}
-                        <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2">
+                        <div
+                            ref={scrollRef}
+                            className="space-y-2 max-h-[350px] overflow-y-auto pr-2"
+                        >
                             {filteredFields.map((field, index) => (
                                 <FieldInput
                                     key={field.id}
@@ -1125,27 +1248,20 @@ const BiodataGenerator: React.FC = () => {
                                     onLabelChange={handleLabelChange}
                                     onFieldMove={handleFieldMove}
                                     onRemoveCustomField={removeCustomField}
-                                    fieldGroupIds={groupIds} // Pass the list of IDs in this step for move logic
+                                    fieldGroupIds={groupIds}
                                 />
                             ))}
                         </div>
-                        <button
-                            onClick={addCustomField}
-                            // Enhanced button styling: added cursor-pointer, bulky padding
-                            className={`mt-6 w-full px-10 py-4 text-base font-medium text-white ${primaryBgClass} rounded-xl ${primaryBgHoverClass} transition duration-150 shadow-xl cursor-pointer`}
-                        >
-                            + Add Custom Field
-                        </button>
+                        {addCustomButton('custom', '+ Add Custom Detail')}
 
                         <div className="mt-8 pt-4 border-t border-gray-200">
                             <h3 className="text-xl font-semibold mb-4 text-gray-700">Download</h3>
                             <button
                                 onClick={generatePdf}
                                 disabled={isGenerating || !isLibrariesLoaded}
-                                // Enhanced button styling: added cursor-pointer, bulky padding
                                 className={`w-full flex items-center justify-center px-10 py-4 border border-transparent text-base font-medium rounded-xl shadow-xl text-white transition-all duration-200 cursor-pointer ${(!isLibrariesLoaded || isGenerating)
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-fuchsia-600 hover:bg-fuchsia-700 focus:ring-4 focus:ring-fuchsia-500 focus:ring-offset-2'
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-fuchsia-600 hover:bg-fuchsia-700 focus:ring-4 focus:ring-fuchsia-500 focus:ring-offset-2'
                                     }`}
                             >
                                 {!isLibrariesLoaded ? (
@@ -1164,7 +1280,7 @@ const BiodataGenerator: React.FC = () => {
                                         Download Complete!
                                     </>
                                 ) : (
-                                    'Download Final Biodata PDF (A4)' // Removed arrow
+                                    'Download Final Biodata PDF (A4)'
                                 )}
                             </button>
                             {generationStatus === 'error' && (
@@ -1185,11 +1301,10 @@ const BiodataGenerator: React.FC = () => {
     // --- Main Render ---
     return (
         <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-inter">
-            <div className="max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-7">
+            <div className="max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-7 bg-white rounded-xl">
 
                 {/* Left Column: Wizard Controls and Steps (60%) */}
-                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg h-fit order-2 lg:order-1">
-                    {/* Step Indicator (Updated for clickability on past steps, thicker line) */}
+                <div className="lg:col-span-3 bg-white p-6 rounded-xl h-fit order-2 lg:order-1">
                     <div className="flex justify-between items-center mb-8 space-x-2">
                         {[1, 2, 3, 4].map((s) => {
                             const isCompleted = s < step;
@@ -1201,7 +1316,7 @@ const BiodataGenerator: React.FC = () => {
                                     <div className={`flex-1 flex flex-col items-center relative z-10 ${isCurrent ? primaryTextClass : 'text-gray-400'}`}>
                                         <button
                                             onClick={() => handleStepClick(s)}
-                                            disabled={!isVisited || isCurrent} // Disable if not visited or is current step
+                                            disabled={!isVisited || isCurrent}
                                             className={`w-10 h-10 flex items-center justify-center rounded-full font-bold border-2 transition-all duration-300 ${isVisited ? `${primaryBgClass} border-fuchsia-600 text-white cursor-pointer` : 'bg-white border-gray-300'} ${isCurrent ? 'ring-4 ring-fuchsia-200' : 'hover:border-fuchsia-400 disabled:opacity-100 disabled:ring-0'}`}
                                         >
                                             {s}
@@ -1211,7 +1326,6 @@ const BiodataGenerator: React.FC = () => {
                                         </span>
                                     </div>
                                     {s < TOTAL_STEPS && (
-                                        // Thicker border line: Corrected JSX by removing unnecessary inner curly braces
                                         <div className={`flex-auto border-t-4 h-0 transition-all duration-300 ${isCompleted ? 'border-fuchsia-400' : 'border-gray-200'}`}></div>
                                     )}
                                 </React.Fragment>
@@ -1224,14 +1338,13 @@ const BiodataGenerator: React.FC = () => {
                         {renderStepContent()}
                     </div>
 
-                    {/* Navigation Buttons (Updated with sticky bottom-0, 'Back' and 'Continue' text, and bulky styling) */}
-                    <div 
+                    {/* Navigation Buttons */}
+                    <div
                         className="sticky bottom-0 bg-white flex justify-between mt-8 py-6 border-t border-gray-200 z-20"
                     >
                         <button
                             onClick={handlePrev}
                             disabled={step === 1}
-                            // Bulky and no arrow, now 'Back'
                             className="px-10 py-3 md:px-12 md:py-4 border border-gray-300 rounded-full text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150 cursor-pointer shadow-sm"
                         >
                             Back
@@ -1239,7 +1352,6 @@ const BiodataGenerator: React.FC = () => {
                         {step < TOTAL_STEPS ? (
                             <button
                                 onClick={handleNext}
-                                // Bulky and no arrow, now 'Continue'
                                 className={`px-10 py-3 md:px-12 md:py-4 border border-transparent rounded-full text-base font-semibold text-white ${primaryBgClass} ${primaryBgHoverClass} transition duration-150 cursor-pointer shadow-lg`}
                             >
                                 Continue
@@ -1258,7 +1370,7 @@ const BiodataGenerator: React.FC = () => {
                         className="lg:sticky lg:top-8 w-full flex justify-center"
                         style={{ height: `${CANVAS_HEIGHT + 100}px` }}
                     >
-                        <div className="bg-white p-4 rounded-xl shadow-lg">
+                        <div className="bg-white py-4 rounded-2xl ">
                             <h3 className="text-xl font-semibold text-gray-800 text-center mb-1">
                                 Live Preview
                             </h3>
@@ -1285,12 +1397,13 @@ const BiodataGenerator: React.FC = () => {
                             </div>
 
                             <BiodataPreview
-                                ref={currentPageIndex === 0 ? canvasRef : undefined} // Only pass ref to page 1 for PDF creation fallback
+                                ref={currentPageIndex === 0 ? canvasRef : undefined}
                                 pageContent={currentPageData}
                                 template={selectedTemplate}
                                 logo={logo}
                                 photo={photo}
                                 pageNumber={currentPageIndex + 1}
+                                prevPageEndGroup={prevGroup}
                             />
                         </div>
                     </div>
