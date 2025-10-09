@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+// import Image from 'next/image';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 // --- External Library Type Definitions (for PDF download) ---
@@ -30,7 +32,7 @@ const DPI_SCALE = 2; // High DPI for crisp canvas rendering
 const TOTAL_STEPS = 4;
 
 // A4 Proportion-Matched Metrics: ADJUSTED FOR HIGH DENSITY VISUAL FIT
-const PADDING = 80;
+const PADDING = 60;
 const FIELD_GAP = 8;
 const LINE_HEIGHT = 14;
 const FONT_SIZE = 10;
@@ -45,13 +47,12 @@ const CONTENT_START_Y = PADDING + 175;
 const MAX_CONTENT_Y = CANVAS_HEIGHT - PADDING - 25;
 
 // Drawing configuration for side-by-side layout
-const LABEL_COL_WIDTH = 150;
 const VALUE_COL_OFFSET = PADDING + 160;
 const VALUE_COL_WIDTH = CANVAS_WIDTH - VALUE_COL_OFFSET - PADDING;
 
 // Placeholder image URLs
 const PLACEHOLDER_PHOTO_URL = "https://placehold.co/120x160/cccccc/333333?text=User+Photo";
-const PLACEHOLDER_LOGO_URL = "https://placehold.co/60x60/ffffff/5c4b51?text=Logo";
+const PLACEHOLDER_LOGO_URL = "./images/layouts/ganesh-intro.png";
 
 
 // --- INTERFACES & TYPES ---
@@ -169,44 +170,44 @@ const flattenFields = (complexFields: ComplexField[]): BiodataField[] => {
 // Generate the initial flat list of fields
 const initialFields: BiodataField[] = flattenFields(INITIAL_COMPLEX_FIELDS);
 
-const DEFAULT_PRIMARY_COLOR = '#ffffff';
+// const DEFAULT_PRIMARY_COLOR = '#ffffff';
 
 // --- UPDATED TEMPLATE CONFIGURATION ---
 const templates: Template[] = [
     {
-        id: 'elegant',
-        name: 'Elegant Ganesha',
-        // FIX: The previous URL was inaccessible due to CORS restrictions. Using a reliable themed placeholder.
-        bgImageUrl: "https://i.ibb.co/b5tzTZdZ/ganesha-royal-maroon-bg-7ffe3710.png",
-        primaryColor: DEFAULT_PRIMARY_COLOR, // Vibrant Pink
-    },
-    {
         id: 'modern',
         name: 'Modern Geometric',
         // Updated URL to remove placeholder text
-        bgImageUrl: "https://placehold.co/500x707/e0e0e0/333333",
+        bgImageUrl: "https://i.ibb.co/q3J2rQck/Whats-App-Image-2025-10-06-at-9-49-57-AM-2.jpg",
         primaryColor: '#333333', // Dark Grey
     },
     {
         id: 'classic',
         name: 'Classic Minimal',
         // Updated URL to remove placeholder text
-        bgImageUrl: "https://placehold.co/500x707/ffffff/374151",
+        bgImageUrl: "https://i.ibb.co/jPJk6GHC/Whats-App-Image-2025-10-06-at-9-49-57-AM-1.jpg",
         primaryColor: '#374151', // Deep Slate
     },
     {
         id: 'nature',
         name: 'Nature Green',
         // Updated URL to remove placeholder text
-        bgImageUrl: "https://placehold.co/500x707/f0fff0/059669",
+        bgImageUrl: "https://i.ibb.co/RF3rzCW/Whats-App-Image-2025-10-06-at-9-49-56-AM-1.jpg",
         primaryColor: '#059669', // Emerald Green
     },
     {
         id: 'royal',
         name: 'Royal Maroon',
         // Updated URL to remove placeholder text
-        bgImageUrl: "https://placehold.co/500x707/f0e0e0/881337",
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
         primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
     },
 ];
 // ------------------------------------
@@ -261,7 +262,7 @@ const useExternalScript = (url: string, globalVariableName: string) => {
                 document.body.removeChild(script);
             }
         };
-    }, [url, globalVariableName]);
+    }, [url, globalVariableName, globalScope]);
 
     return isLoaded;
 };
@@ -342,7 +343,7 @@ const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
 
 
     while (remainingFields.length > 0) {
-        let pageFields: BiodataField[] = [];
+        const pageFields: BiodataField[] = [];
 
         // Determine the canonical group ID of the last field from the previous page, or null if it's page 1
         const prevPageEndGroup = pages.length > 0
@@ -396,17 +397,23 @@ const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
  * Utility to wrap text on the canvas and track vertical position,
  * returning the final baseline Y coordinate of the last line drawn.
  */
-const wrapTextAndGetLastY = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
+const wrapTextAndGetLastY = (
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    lineHeight: number
+): number => {
     const words = text.split(' ');
     let line = '';
     let lineY = y;
 
-    if (text.trim() === '') return y - lineHeight;
+    if (text.trim() === '') return y + lineHeight;
 
     for (let n = 0; n < words.length; n++) {
         const testLine = line + words[n] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
+        const testWidth = ctx.measureText(testLine).width;
 
         if (testWidth > maxWidth && n > 0) {
             ctx.fillText(line.trim(), x, lineY);
@@ -416,9 +423,13 @@ const wrapTextAndGetLastY = (ctx: CanvasRenderingContext2D, text: string, x: num
             line = testLine;
         }
     }
+
     ctx.fillText(line.trim(), x, lineY);
-    return lineY;
-}
+
+    // Return bottom Y after the last line
+    return lineY + lineHeight;
+};
+
 
 /**
  * Draws the content of a single page using only the fields provided.
@@ -435,151 +446,112 @@ const drawContentForPage = (
 ) => {
 
     const width = CANVAS_WIDTH;
-    const height = CANVAS_HEIGHT;
-    let currentY = PADDING + 10;
+    // Define a clear starting Y position for content
+    let currentY: number;
 
-    // 1. Draw Background
-    // NOTE: The main background drawing is handled in the useEffect hook in BiodataPreview
-    // and correctly applies the image or a fallback color.
+    // 1. Draw Background (Handled elsewhere)
 
     // 2. Page Indicator
-    ctx.font = `12px Inter, sans-serif`;
-    ctx.fillStyle = template.primaryColor;
-    ctx.textAlign = 'center';
-    ctx.fillText(`- Page ${pageNumber} -`, width / 2, height - PADDING + 55);
+    // ctx.font = `13px Inter, sans-serif`;
+    // ctx.fillStyle = template.primaryColor;
+    // ctx.textAlign = 'center';
+    // // Use a fixed, clear position at the bottom
+    // ctx.fillText(`- Page ${pageNumber} -`, width / 2, height - PADDING + 5);
 
     if (pageNumber === 1) {
         // --- 3. Header Elements (Only on Page 1) ---
-        const logoSize = 60;
+        const logoWidth = 150;
+        const logoHeight = 60;
         const photoWidth = 120;
         const photoHeight = 160;
+        const spacingBetweenLogoAndPhoto = 20;
 
-        // Photo Border/Background
-        ctx.fillStyle = template.primaryColor;
-        ctx.fillRect(width - PADDING - photoWidth, PADDING, photoWidth, photoHeight);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(width - PADDING - photoWidth + 2, PADDING + 2, photoWidth - 4, photoHeight - 4);
+        // Calculate horizontal start for logo and photo block centered on page
+        const blockWidth = logoWidth + spacingBetweenLogoAndPhoto + photoWidth;
+        const blockStartX = (width - blockWidth) / 2;
 
-        // Logo
+        // Logo position (top-center-ish)
+        const logoX = blockStartX;
+        const logoY = PADDING;
+
+        // Photo position (top right next to logo)
+        const photoX = logoX + logoWidth + spacingBetweenLogoAndPhoto;
+        const photoY = PADDING;
+
+        // Draw logo
         if (logo.object) {
-            ctx.drawImage(logo.object, PADDING, PADDING, logoSize, logoSize);
+            ctx.drawImage(logo.object, logoX, logoY, logoWidth, logoHeight);
         }
 
-        // Photo
-        if (photo.object) {
-            ctx.drawImage(photo.object, width - PADDING - photoWidth + 2, PADDING + 2, photoWidth - 4, photoHeight - 4);
-        }
-
-        // Title/Name
-        ctx.textAlign = 'left';
-        ctx.font = `32px bold Inter, sans-serif`;
+        // Draw photo border/background on top right (around photo position)
         ctx.fillStyle = template.primaryColor;
+        ctx.fillRect(photoX, photoY, photoWidth, photoHeight);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
 
-        const nameField = initialFields.find(f => f.id === 'name-0');
-        let nameText = 'BIO-DATA';
-
-        if (nameField) {
-            nameText = nameField.value.split(' ').slice(0, 3).join(' ').toUpperCase();
+        // Draw photo image inside border
+        if (photo.object) {
+            ctx.drawImage(photo.object, photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
         }
 
-        ctx.fillText(nameText, PADDING, PADDING + 120);
-
-        // Start content drawing here
-        currentY = CONTENT_START_Y;
+        // SET THE START Y POSITION *AFTER* the header block for Page 1
+        currentY = Math.max(logoY + logoHeight, photoY + photoHeight) + PADDING; // Start well below the header
     } else {
         // Start content drawing closer to the top for subsequent pages
         currentY = PADDING + FIELD_GAP;
     }
 
-    // --- 4. Draw Fields for this Page (Side-by-Side) ---
+    // === 4. Draw Fields for this Page ===
     ctx.textAlign = 'left';
     const labelX = PADDING;
     const valueX = VALUE_COL_OFFSET;
     const valueWidth = VALUE_COL_WIDTH;
 
-    // Used to track group changes and only draw a heading when the group changes
-    let lastCanonicalGroupId: CanonicalGroupId | null;
-
-    // Set the initial reference group ID based on the previous page's end (if applicable)
-    if (pageNumber === 1) {
-        lastCanonicalGroupId = 'other'; // Page 1 always starts fresh after header
-    } else {
-        // Subsequent pages: Start tracking from the group of the last item on the previous page
-        // This prevents redrawing the heading if the section continues
-        lastCanonicalGroupId = prevPageEndGroup || 'other';
-    }
-
+    let lastCanonicalGroupId: CanonicalGroupId | null = pageNumber === 1
+        ? 'none' as CanonicalGroupId
+        : prevPageEndGroup || 'none' as CanonicalGroupId;
 
     pageFields.forEach((field) => {
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
-        // --- Insert Heading if Section Changes ---
-        // Check if the group ID is different from the last one we drew/referenced AND it's a non-placeholder group
+        // Skip field entirely if value is empty/null/undefined
+        if (!field.value || field.value.trim() === '') {
+            return; // Skip this iteration
+        }
+
+        // --- Draw Section Heading if Needed ---
         if (currentCanonicalGroupId !== lastCanonicalGroupId && currentCanonicalGroupId !== 'other') {
-
             const headingText = GROUP_TITLES[currentCanonicalGroupId];
-
             if (headingText) {
-                // Add space above the decorative line
-                currentY += 25;
+                currentY += 20;
 
-                // Draw decorative line above the heading
-                ctx.strokeStyle = template.primaryColor + 'AA';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(PADDING, currentY);
-                ctx.lineTo(width - PADDING, currentY);
-                ctx.stroke();
-
-                // Move Y down for the heading text baseline
-                currentY += HEADING_LINE_GAP;
-
-                // Draw Heading Text
-                ctx.font = `${HEADING_FONT_SIZE}px bold Inter, sans-serif`;
+                ctx.font = `${HEADING_FONT_SIZE + 2}px Pacifico, cursive`;
                 ctx.fillStyle = template.primaryColor;
-                ctx.fillText(headingText.toUpperCase(), PADDING, currentY);
+                ctx.fillText(headingText, PADDING + 0.3, currentY + 0.3);
+                ctx.fillText(headingText, PADDING, currentY);
 
-                // Move Y down past the heading text
-                currentY += HEADING_FONT_SIZE + 10; // Extra space after the heading
+                const headingFontSize = HEADING_FONT_SIZE + 2;
+                currentY += headingFontSize + 16;
             }
 
-            // IMPORTANT: Update the last group ID drawn *only* after drawing the heading
             lastCanonicalGroupId = currentCanonicalGroupId;
         }
-        // --- End Heading Logic ---
 
-
-        // 1. Draw Label
-        ctx.font = `${FONT_SIZE}px bold Inter, sans-serif`;
+        // --- Draw Label ---
+        ctx.font = `bold ${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = template.primaryColor;
-        ctx.fillText(field.label, labelX, currentY);
+        const labelMaxWidth = VALUE_COL_OFFSET - PADDING - 10; // Optional margin
+        wrapTextAndGetLastY(ctx, field.label, labelX, currentY, labelMaxWidth, LINE_HEIGHT);
 
-        // Add a colon slightly offset from the label (max 150px)
-        ctx.fillText(':', PADDING + LABEL_COL_WIDTH - 10, currentY);
-
-        // 2. Draw Value (starts side-by-side with label, wraps underneath the value column)
+        // --- Draw Value ---
         ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = '#1f2937';
-        const displayValue = field.value;
+        const bottomY = wrapTextAndGetLastY(ctx, field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
 
-        // lastValueLineY is the baseline Y of the last line of value text drawn
-        const lastValueLineY = wrapTextAndGetLastY(ctx, displayValue, valueX, currentY, valueWidth, LINE_HEIGHT);
-
-        // 3. Determine the baseline position for the next content block.
-        const nextYAfterTextBlock = lastValueLineY + LINE_HEIGHT;
-
-        // 4. Draw a separator line
-        ctx.strokeStyle = template.primaryColor + '33';
-        ctx.beginPath();
-        ctx.moveTo(labelX, nextYAfterTextBlock - LINE_HEIGHT / 2);
-        ctx.lineTo(width - PADDING, nextYAfterTextBlock - LINE_HEIGHT / 2);
-        ctx.stroke();
-
-        // 5. Move Y cursor for the next field
-        currentY = nextYAfterTextBlock + FIELD_GAP;
+        currentY = bottomY + FIELD_GAP;
     });
-};
 
+};
 
 // --- Sub-Component: The Biodata Preview (The Canvas) ---
 
@@ -651,7 +623,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
         drawBackgroundAndContent();
 
-    }, [pageContent, template, logo.object, photo.object, pageNumber, prevPageEndGroup]);
+    }, [pageContent, template, logo.object, photo.object, pageNumber, prevPageEndGroup, logo, photo]);
 
 
     return (
@@ -687,8 +659,6 @@ interface FieldInputProps {
 
 const FieldInput: React.FC<FieldInputProps> = React.memo(({
     field,
-    index,
-    isLast,
     onFieldChange,
     onLabelChange,
     onFieldMove,
@@ -794,7 +764,6 @@ const BiodataGenerator: React.FC = () => {
     const primaryBgHoverClass = "hover:bg-fuchsia-700";
     const primaryRingClass = "ring-fuchsia-200";
     const primaryBorderClass = "border-fuchsia-600";
-    const lightBgClass = "bg-fuchsia-50";
 
 
     const isJsPdfLoaded = useExternalScript(
@@ -859,7 +828,7 @@ const BiodataGenerator: React.FC = () => {
         img.onload = () => setter({ url: src, object: img });
         img.onerror = () => setter({ url: src, object: null });
         img.src = src;
-    }, [templates]);
+    }, []);
 
     useEffect(() => {
         loadImage(PLACEHOLDER_LOGO_URL, setLogo);
@@ -1161,16 +1130,9 @@ const BiodataGenerator: React.FC = () => {
                             <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Select Template</h3>
                             <div className="flex flex-wrap gap-4">
                                 {templates.map((template) => (
-                                    <div
-                                        key={template.id}
-                                        onClick={() => setSelectedTemplate(template)}
-                                        className={`w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.33%-12px)] p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${lightBgClass} 
-                                            ${selectedTemplate.id === template.id
-                                                ? `${primaryBorderClass} ring-4 ${primaryRingClass}`
-                                                : 'border-gray-200 hover:border-fuchsia-400'
-                                            }`}
-                                    >
-                                        <div className="font-semibold text-sm text-center" style={{ color: template.primaryColor }}>{template.name}</div>
+                                    <div key={template.id} onClick={() => setSelectedTemplate(template)} className={`w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.33%-12px)] p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${selectedTemplate.id === template.id ? `${primaryBorderClass} ring-4 ${primaryRingClass}` : 'border-gray-200 hover:border-fuchsia-400'}`} >
+                                        <img src={template.bgImageUrl} alt={template.name} />
+                                        <div className="font-semibold text-sm text-center">{template.name}</div>
                                     </div>
                                 ))}
                             </div>

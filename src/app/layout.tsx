@@ -4,6 +4,14 @@ import "./globals.css";
 import Header from "./layouts/Header";
 import Footer from "./layouts/Footer";
 
+import { Pacifico } from "next/font/google";
+
+const pacifico = Pacifico({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-pacifico",
+});
+
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],
@@ -27,12 +35,10 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased flex flex-col min-h-screen`}
             >
                 <Header />
-                <main className="flex-grow">
-                    {children} {/* This is where your page content goes */}
-                </main>
+                <main className="flex-grow">{children}</main>
                 <Footer />
             </body>
         </html>
