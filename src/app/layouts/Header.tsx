@@ -24,7 +24,7 @@ const Header = () => {
                         <Link href="/" className="text-2xl font-bold text-indigo-600">
                             <Image className='max-w-full h-auto' src={logoImage} alt='Logo' width={240} height={60} />
                         </Link>
-                    </div>8
+                    </div>
 
                     {/* 2. Center: Menus */}
                     <nav className="hidden md:flex space-x-8">
@@ -41,12 +41,12 @@ const Header = () => {
 
                     {/* 3. Right: Create Now Button */}
                     <div className="flex items-center">
-                        <Link href="/login" className='px-10 py-3 md:px-12 md:py-4 border border-gray-300 rounded-full text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150 cursor-pointer shadow-sm'>
+                        <Link href="/login" className='px-10 py-3 me-3 border border-gray-300 rounded-full text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition duration-150 cursor-pointer shadow-sm'>
                             Login
                         </Link>
                         <Link
                             href="/create"
-                            className={`px-10 py-3 md:px-12 md:py-4 border border-transparent rounded-full text-base font-semibold text-white ${primaryBgClass} ${primaryBgHoverClass} transition duration-150 cursor-pointer shadow-lg`}
+                            className={`px-10 py-3 border border-transparent rounded-full text-base font-semibold text-white ${primaryBgClass} ${primaryBgHoverClass} transition duration-150 cursor-pointer shadow-lg`}
                         >
                             Create Now
                         </Link>

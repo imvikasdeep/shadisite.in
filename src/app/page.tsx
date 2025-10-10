@@ -115,25 +115,24 @@ interface ComplexField {
 
 const INITIAL_COMPLEX_FIELDS: ComplexField[] = [
     // Step 2: Personal Details (Group: 'personal')
-    { id: 'name', label: 'Full Name', value: 'Jane Doe', group: 'personal' },
-    { id: 'dob', label: 'Date of Birth / Age', value: '01 Jan 1995 / 30 Years', group: 'personal' },
-    { id: 'height', label: 'Height / Weight', value: '5 ft 6 in / 55 kg', group: 'personal' },
-    { id: 'education', label: 'Education', value: 'M.S. Computer Science, Stanford University', group: 'personal' },
-    { id: 'occupation', label: 'Occupation', value: 'Senior Software Engineer at Google', group: 'personal' },
-    { id: 'hobbies', label: 'Hobbies / Interests', value: 'Reading, hiking, painting, playing piano, and cooking new international cuisines. These interests define my personality and are important to me.', group: 'personal' },
-    { id: 'religion', label: 'Religion / Caste / Gotra', value: 'Hindu / Brahmin / Kaundinya', group: 'personal' },
+    { id: 'name', label: 'Full Name', value: '', group: 'personal' },
+    { id: 'dob', label: 'Date of Birth / Age', value: '', group: 'personal' },
+    { id: 'height', label: 'Height / Weight', value: '', group: 'personal' },
+    { id: 'education', label: 'Education', value: '', group: 'personal' },
+    { id: 'occupation', label: 'Occupation', value: '', group: 'personal' },
+    { id: 'hobbies', label: 'Hobbies / Interests', value: '', group: 'personal' },
+    { id: 'religion', label: 'Religion / Caste / Gotra', value: '', group: 'personal' },
 
     // Step 3: Family Details (Group: 'family')
-    { id: 'father', label: 'Father\'s Name / Occupation', value: 'Mr. John Doe / Retired IAS Officer', group: 'family' },
-    { id: 'mother', label: 'Mother\'s Name / Status', value: 'Mrs. Mary Doe / Homemaker', group: 'family' },
-    { id: 'siblings', label: 'Siblings', value: 'One elder brother (married, settled in USA), one younger sister (studying medicine).', group: 'family' },
-    { id: 'familyType', label: 'Family Type / Values', value: 'Nuclear family with modern values and a traditional root. We are closely knit and supportive.', group: 'family' },
-    // Partner Preferences (Long field to test pagination)
-    { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: 'Seeking a highly educated, ambitious, and caring partner from a similar background. Must be kind-hearted, respectful, and value family above all. Location preference is flexible, but must be willing to settle internationally. Seeking someone who enjoys travel and exploration, and is ready for long-term commitment. This detail is very important for a match. The ideal partner should also have a great sense of humor and enjoy quiet evenings at home as much as exciting trips. This field is intentionally made long to ensure that the new, higher-density layout correctly handles wrapping and pagination across the pages.', group: 'family' },
+    { id: 'father', label: 'Father\'s Name / Occupation', value: '', group: 'family' },
+    { id: 'mother', label: 'Mother\'s Name / Status', value: '', group: 'family' },
+    { id: 'siblings', label: 'Siblings', value: '', group: 'family' },
+    { id: 'familyType', label: 'Family Type / Values', value: '', group: 'family' },
+    { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: '', group: 'family' },
 
     // Step 4: Contact & Other Details (Group: 'contact')
-    { id: 'contact', label: 'Contact Details', value: 'Email: jane.doe@example.com | Phone: +1 123-456-7890 (Please contact after 7 PM IST)', group: 'contact' },
-    { id: 'appendix', label: 'Appendix Note', value: 'A detailed horoscope is available upon request. We believe in meeting the right person to forge a strong bond.', group: 'contact' },
+    { id: 'contact', label: 'Contact Details', value: '', group: 'contact' },
+    { id: 'appendix', label: 'Appendix Note', value: '', group: 'contact' },
 ];
 
 /**
@@ -441,67 +440,55 @@ const drawContentForPage = (
     logo: ImageState,
     photo: ImageState,
     pageNumber: number = 1,
-    // NEW: The group ID of the last item on the previous page
     prevPageEndGroup: CanonicalGroupId | null = null
 ) => {
 
     const width = CANVAS_WIDTH;
-    // Define a clear starting Y position for content
+
     let currentY: number;
 
-    // 1. Draw Background (Handled elsewhere)
-
-    // 2. Page Indicator
-    // ctx.font = `13px Inter, sans-serif`;
-    // ctx.fillStyle = template.primaryColor;
-    // ctx.textAlign = 'center';
-    // // Use a fixed, clear position at the bottom
-    // ctx.fillText(`- Page ${pageNumber} -`, width / 2, height - PADDING + 5);
-
     if (pageNumber === 1) {
-        // --- 3. Header Elements (Only on Page 1) ---
+        // --- Header Elements ---
         const logoWidth = 150;
         const logoHeight = 60;
+
         const photoWidth = 120;
         const photoHeight = 160;
-        const spacingBetweenLogoAndPhoto = 20;
 
-        // Calculate horizontal start for logo and photo block centered on page
-        const blockWidth = logoWidth + spacingBetweenLogoAndPhoto + photoWidth;
-        const blockStartX = (width - blockWidth) / 2;
+        const spacingBelowLogo = 10;
+        const spacingFromTop = PADDING;
 
-        // Logo position (top-center-ish)
-        const logoX = blockStartX;
-        const logoY = PADDING;
-
-        // Photo position (top right next to logo)
-        const photoX = logoX + logoWidth + spacingBetweenLogoAndPhoto;
-        const photoY = PADDING;
+        // Center logo horizontally at top
+        const logoX = (width - logoWidth) / 2;
+        const logoY = spacingFromTop;
 
         // Draw logo
         if (logo.object) {
             ctx.drawImage(logo.object, logoX, logoY, logoWidth, logoHeight);
         }
 
-        // Draw photo border/background on top right (around photo position)
+        // Photo: top-right but slightly below logo
+        const photoX = width - PADDING - photoWidth;
+        const photoY = logoY + logoHeight + spacingBelowLogo;
+
+        // Draw photo border/background
         ctx.fillStyle = template.primaryColor;
         ctx.fillRect(photoX, photoY, photoWidth, photoHeight);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
 
-        // Draw photo image inside border
         if (photo.object) {
             ctx.drawImage(photo.object, photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
         }
 
-        // SET THE START Y POSITION *AFTER* the header block for Page 1
-        currentY = Math.max(logoY + logoHeight, photoY + photoHeight) + PADDING; // Start well below the header
+        // Start content *just below the logo*, from top-left
+        currentY = logoY + logoHeight + PADDING;
     } else {
-        // Start content drawing closer to the top for subsequent pages
+        // For next pages, start near top
         currentY = PADDING + FIELD_GAP;
     }
 
-    // === 4. Draw Fields for this Page ===
+    // === Draw Fields ===
     ctx.textAlign = 'left';
     const labelX = PADDING;
     const valueX = VALUE_COL_OFFSET;
@@ -514,17 +501,15 @@ const drawContentForPage = (
     pageFields.forEach((field) => {
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
-        // Skip field entirely if value is empty/null/undefined
         if (!field.value || field.value.trim() === '') {
-            return; // Skip this iteration
+            return;
         }
 
-        // --- Draw Section Heading if Needed ---
+        // Section heading
         if (currentCanonicalGroupId !== lastCanonicalGroupId && currentCanonicalGroupId !== 'other') {
             const headingText = GROUP_TITLES[currentCanonicalGroupId];
             if (headingText) {
                 currentY += 20;
-
                 ctx.font = `${HEADING_FONT_SIZE + 2}px Pacifico, cursive`;
                 ctx.fillStyle = template.primaryColor;
                 ctx.fillText(headingText, PADDING + 0.3, currentY + 0.3);
@@ -533,25 +518,24 @@ const drawContentForPage = (
                 const headingFontSize = HEADING_FONT_SIZE + 2;
                 currentY += headingFontSize + 16;
             }
-
             lastCanonicalGroupId = currentCanonicalGroupId;
         }
 
-        // --- Draw Label ---
+        // Label
         ctx.font = `bold ${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = template.primaryColor;
-        const labelMaxWidth = VALUE_COL_OFFSET - PADDING - 10; // Optional margin
+        const labelMaxWidth = VALUE_COL_OFFSET - PADDING - 10;
         wrapTextAndGetLastY(ctx, field.label, labelX, currentY, labelMaxWidth, LINE_HEIGHT);
 
-        // --- Draw Value ---
+        // Value
         ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = '#1f2937';
         const bottomY = wrapTextAndGetLastY(ctx, field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
 
         currentY = bottomY + FIELD_GAP;
     });
-
 };
+
 
 // --- Sub-Component: The Biodata Preview (The Canvas) ---
 
