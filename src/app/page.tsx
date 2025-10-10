@@ -208,6 +208,118 @@ const templates: Template[] = [
         bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
         primaryColor: '#222222', // Deep Maroon
     },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
+    {
+        id: 'royal',
+        name: 'Royal Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
+        primaryColor: '#881337', // Deep Maroon
+    },
+    {
+        id: 'neww',
+        name: 'Yellow Maroon',
+        // Updated URL to remove placeholder text
+        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
+        primaryColor: '#222222', // Deep Maroon
+    },
 ];
 // ------------------------------------
 
@@ -723,6 +835,7 @@ FieldInput.displayName = 'FieldInput';
 // --- Main Application Component ---
 
 const BiodataGenerator: React.FC = () => {
+    const [templatePage, setTemplatePage] = useState(0);
     const [fields, setFields] = useState<BiodataField[]>(initialFields);
     const [selectedTemplate, setSelectedTemplate] = useState<Template>(templates[0]);
     const [logo, setLogo] = useState<ImageState>({ url: PLACEHOLDER_LOGO_URL, object: null });
@@ -1080,6 +1193,12 @@ const BiodataGenerator: React.FC = () => {
 
 
     const renderStepContent = () => {
+        // --- Template Pagination Logic ---
+        const TEMPLATES_PER_PAGE = 10;
+        const totalTemplatePages = Math.ceil(templates.length / TEMPLATES_PER_PAGE);
+        const paginatedTemplates = templates.slice(templatePage * TEMPLATES_PER_PAGE, (templatePage + 1) * TEMPLATES_PER_PAGE);
+
+
         // Filter fields based on the current step group
         const groupIds = getCurrentStepFieldIds(step);
         const filteredFields = fields.filter(f => groupIds.includes(f.id));
@@ -1105,14 +1224,83 @@ const BiodataGenerator: React.FC = () => {
 
                         <div className="space-y-4 mb-8">
                             <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Select Template</h3>
-                            <div className="flex flex-wrap gap-4">
-                                {templates.map((template) => (
-                                    <div key={template.id} onClick={() => setSelectedTemplate(template)} className={`w-full sm:w-[calc(50%-8px)] lg:w-[calc(33.33%-12px)] p-4 border-2 rounded-xl cursor-pointer transition duration-200 shadow-md ${selectedTemplate.id === template.id ? `${primaryBorderClass} ring-4 ${primaryRingClass}` : 'border-gray-200 hover:border-fuchsia-400'}`} >
-                                        <img src={template.bgImageUrl} alt={template.name} />
-                                        <div className="font-semibold text-sm text-center">{template.name}</div>
+                            
+                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {paginatedTemplates.map((template, index) => (
+                                    <div
+                                        key={`${template.id}-${index}`}
+                                        onClick={() => setSelectedTemplate(template)}
+                                        className={`p-1 border-2 rounded-lg cursor-pointer transition duration-200 shadow-md ${selectedTemplate.id === template.id
+                                            ? `${primaryBorderClass} ring-4 ${primaryRingClass}`
+                                            : 'border-gray-200 hover:border-fuchsia-400'
+                                            }`}
+                                    >
+                                        <img
+                                            src={template.bgImageUrl}
+                                            alt={template.name}
+                                            className="w-full h-auto rounded-sm object-cover"
+                                        />
+                                        {/* <div className="font-semibold text-sm text-center mt-2">{template.name}</div> */}
                                     </div>
                                 ))}
                             </div>
+
+                            {totalTemplatePages > 1 && (
+                                <div className="flex items-center justify-end gap-4 mt-3">
+                                    {/* Previous Button */}
+                                    <button
+                                        onClick={() => setTemplatePage(p => Math.max(0, p - 1))}
+                                        disabled={templatePage === 0}
+                                        className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 cursor-pointer
+                                            ${templatePage === 0
+                                                ? "opacity-40 cursor-not-allowed"
+                                                : "hover:bg-gray-100 active:scale-95"
+                                            }`}
+                                    >
+                                        {/* Left Arrow SVG */}
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth="2"
+                                            stroke="currentColor"
+                                            className="w-5 h-5"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {/* Page Indicator */}
+                                    <span className="font-medium text-gray-600 select-none text-sm">
+                                        Page {templatePage + 1} / {totalTemplatePages}
+                                    </span>
+
+                                    {/* Next Button */}
+                                    <button
+                                        onClick={() => setTemplatePage(p => Math.min(totalTemplatePages - 1, p + 1))}
+                                        disabled={templatePage === totalTemplatePages - 1}
+                                        className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 cursor-pointer
+                                            ${templatePage === totalTemplatePages - 1
+                                                ? "opacity-40 cursor-not-allowed"
+                                                : "hover:bg-gray-100 active:scale-95"
+                                            }`}
+                                    >
+                                        {/* Right Arrow SVG */}
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth="2"
+                                            stroke="currentColor"
+                                            className="w-5 h-5"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                            )}
+
                         </div>
 
                         <div className="space-y-6">
@@ -1318,27 +1506,27 @@ const BiodataGenerator: React.FC = () => {
                             {totalPages > 1 && (
                                 <div className="flex items-center justify-center space-x-3 mb-3 text-sm font-medium text-gray-600">
                                     <button
-                                    onClick={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
-                                    disabled={currentPageIndex === 0}
-                                    className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+                                        onClick={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
+                                        disabled={currentPageIndex === 0}
+                                        className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
                                     >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
-                                    </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+                                        </svg>
                                     </button>
 
                                     <span>
-                                    Page <span className="text-fuchsia-600 font-bold">{currentPageIndex + 1}</span> of <span className="font-bold">{totalPages}</span>
+                                        Page <span className="text-fuchsia-600 font-bold">{currentPageIndex + 1}</span> of <span className="font-bold">{totalPages}</span>
                                     </span>
 
                                     <button
-                                    onClick={() => setCurrentPageIndex(prev => Math.min(totalPages - 1, prev + 1))}
-                                    disabled={currentPageIndex === totalPages - 1}
-                                    className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+                                        onClick={() => setCurrentPageIndex(prev => Math.min(totalPages - 1, prev + 1))}
+                                        disabled={currentPageIndex === totalPages - 1}
+                                        className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
                                     >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 0 0 .708L10.293 8l-5.647 5.646a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708l-6-6a.5.5 0 0 0-.708 0z" />
-                                    </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 0 0 .708L10.293 8l-5.647 5.646a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708l-6-6a.5.5 0 0 0-.708 0z" />
+                                        </svg>
                                     </button>
                                 </div>
                             )}
