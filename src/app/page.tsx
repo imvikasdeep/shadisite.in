@@ -307,9 +307,19 @@ const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
     if (typeof document === 'undefined') return [];
 
     const pages: PageInfo[] = [];
-    const contentFields = fields.filter(f => f.label.trim() !== '');
-    let remainingFields = [...contentFields];
 
+    // ✅ Filter out fields with empty label OR empty value
+    const contentFields = fields.filter(f =>
+        f.label.trim() !== '' &&
+        f.value &&
+        f.value.trim() !== ''
+    );
+
+    if (contentFields.length === 0) {
+        return []; // ✅ Nothing to paginate
+    }
+
+    let remainingFields = [...contentFields];
 
     const dummyCanvas = document.createElement('canvas');
     const ctx = dummyCanvas.getContext('2d');
@@ -317,78 +327,59 @@ const calculatePagination = (fields: BiodataField[]): PageInfo[] => {
     ctx.scale(DPI_SCALE, DPI_SCALE);
     ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
 
-    // Helper to calculate space consumed by a field or a heading
     const calculateConsumption = (field: BiodataField, lastGroupId: CanonicalGroupId | null): number => {
         let height = 0;
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
-        // Heading logic: Draw only if the group has genuinely changed from the last drawn/referenced item.
-        // This ensures headings are not repeated if a section breaks across pages.
         if (currentCanonicalGroupId !== lastGroupId && currentCanonicalGroupId !== 'other') {
-            height += 25; // Space above the decorative line
-            height += HEADING_FONT_SIZE + HEADING_LINE_GAP + 10; // Heading text and space below
+            height += 25; // space above the line
+            height += HEADING_FONT_SIZE + HEADING_LINE_GAP + 10;
         }
 
-        // Calculate space consumed by the field content
         const valueLineCount = countWrappedTextLines(ctx, field.value, VALUE_COL_WIDTH);
         const textLines = Math.max(1, valueLineCount);
         const textBlockHeight = textLines * LINE_HEIGHT;
 
-        // Add field consumption: Text Block Height + Spacing (FIELD_GAP)
         height += textBlockHeight + FIELD_GAP;
 
         return height;
     };
 
-
     while (remainingFields.length > 0) {
         const pageFields: BiodataField[] = [];
 
-        // Determine the canonical group ID of the last field from the previous page, or null if it's page 1
         const prevPageEndGroup = pages.length > 0
             ? getCanonicalGroupId(pages[pages.length - 1].fields.slice(-1)[0].groupId)
             : null;
 
-        // The group ID used to check if the FIRST field on the NEW page needs a heading drawn above it.
         let lastGroupIdDrawnOrReferenced = prevPageEndGroup;
-
-        // Page 1 starts at CONTENT_START_Y. Subsequent pages start at PADDING + FIELD_GAP.
         let currentY = pages.length === 0 ? CONTENT_START_Y : PADDING + FIELD_GAP;
 
         for (let i = 0; i < remainingFields.length; i++) {
             const field = remainingFields[i];
-
-            // Use the determined reference group ID for consumption calculation
             const requiredHeight = calculateConsumption(field, lastGroupIdDrawnOrReferenced);
-
             const nextCalculatedY = currentY + requiredHeight;
 
-            // Check for page overflow. If it doesn't fit and we already drew fields on this page, break to a new page.
             if (nextCalculatedY > MAX_CONTENT_Y && pageFields.length > 0) {
                 break;
             }
 
-            // If it fits 
             pageFields.push(field);
             currentY = nextCalculatedY;
-            // Update the last group ID *drawn/processed* on this page
             lastGroupIdDrawnOrReferenced = getCanonicalGroupId(field.groupId);
         }
 
-        // Add the fields collected for this page
+        // ✅ Only add a page if it actually has renderable fields
         if (pageFields.length > 0) {
-            pages.push({ fields: pageFields, prevPageEndGroup: prevPageEndGroup });
+            pages.push({ fields: pageFields, prevPageEndGroup });
             remainingFields = remainingFields.slice(pageFields.length);
-        } else if (remainingFields.length > 0) {
-            console.error("Pagination failed to place a field.");
-            pages.push({ fields: remainingFields, prevPageEndGroup: prevPageEndGroup });
-            remainingFields = [];
+        } else {
+            break; // ✅ stop the loop — nothing more to paginate
         }
     }
 
     return pages;
 };
-
 
 // --- Core Drawing Logic for a Single Page ---
 
@@ -501,11 +492,12 @@ const drawContentForPage = (
     pageFields.forEach((field) => {
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
+        // ✅ Skip drawing *everything* if value is empty
         if (!field.value || field.value.trim() === '') {
             return;
         }
 
-        // Section heading
+        // === Section Heading ===
         if (currentCanonicalGroupId !== lastCanonicalGroupId && currentCanonicalGroupId !== 'other') {
             const headingText = GROUP_TITLES[currentCanonicalGroupId];
             if (headingText) {
@@ -521,19 +513,20 @@ const drawContentForPage = (
             lastCanonicalGroupId = currentCanonicalGroupId;
         }
 
-        // Label
+        // === Label ===
         ctx.font = `bold ${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = template.primaryColor;
         const labelMaxWidth = VALUE_COL_OFFSET - PADDING - 10;
         wrapTextAndGetLastY(ctx, field.label, labelX, currentY, labelMaxWidth, LINE_HEIGHT);
 
-        // Value
+        // === Value ===
         ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = '#1f2937';
         const bottomY = wrapTextAndGetLastY(ctx, field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
 
         currentY = bottomY + FIELD_GAP;
     });
+
 };
 
 
@@ -706,7 +699,7 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                         onChange={handleValueChange}
                         rows={field.value.length > 50 ? 3 : 1}
                         className="w-full text-sm p-2 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
-                        placeholder="e.g., Jane Doe / 30 Years"
+                        placeholder={`Enter ${field.label}...`}
                     />
                 </div>
             </div>
@@ -1317,30 +1310,38 @@ const BiodataGenerator: React.FC = () => {
                         style={{ height: `${CANVAS_HEIGHT + 100}px` }}
                     >
                         <div className="bg-white py-4 rounded-2xl ">
-                            <h3 className="text-xl font-semibold text-gray-800 text-center mb-1">
+                            <h3 className="text-xl font-semibold text-gray-800 text-center mb-3">
                                 Live Preview
                             </h3>
 
                             {/* Page Counter and Navigation */}
-                            <div className="flex items-center justify-center space-x-3 mb-3 text-sm font-medium text-gray-600">
-                                <button
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-center space-x-3 mb-3 text-sm font-medium text-gray-600">
+                                    <button
                                     onClick={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
                                     disabled={currentPageIndex === 0}
                                     className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" /></svg>
-                                </button>
-                                <span>
+                                    >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+                                    </svg>
+                                    </button>
+
+                                    <span>
                                     Page <span className="text-fuchsia-600 font-bold">{currentPageIndex + 1}</span> of <span className="font-bold">{totalPages}</span>
-                                </span>
-                                <button
+                                    </span>
+
+                                    <button
                                     onClick={() => setCurrentPageIndex(prev => Math.min(totalPages - 1, prev + 1))}
                                     disabled={currentPageIndex === totalPages - 1}
                                     className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 0 0 .708L10.293 8l-5.647 5.646a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708l-6-6a.5.5 0 0 0-.708 0z" /></svg>
-                                </button>
-                            </div>
+                                    >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 0 0 .708L10.293 8l-5.647 5.646a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708l-6-6a.5.5 0 0 0-.708 0z" />
+                                    </svg>
+                                    </button>
+                                </div>
+                            )}
 
                             <BiodataPreview
                                 ref={currentPageIndex === 0 ? canvasRef : undefined}
