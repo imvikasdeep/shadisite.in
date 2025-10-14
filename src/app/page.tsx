@@ -697,7 +697,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
         drawBackgroundAndContent();
 
-    }, [pageContent, template, photo.object, pageNumber, prevPageEndGroup, logo, photo]);
+    }, [pageContent, template, photo.object, pageNumber, prevPageEndGroup, logo, photo, dietyText, templateHeading]);
 
 
     return (
@@ -738,7 +738,6 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
     onFieldChange,
     onLabelChange,
     onFieldMove,
-    onRemoveCustomField,
     fieldGroupIds
 }) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
