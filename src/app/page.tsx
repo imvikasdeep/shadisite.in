@@ -207,121 +207,25 @@ const templates: Template[] = [
         // Updated URL to remove placeholder text
         bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
         primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
-    {
-        id: 'royal',
-        name: 'Royal Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/20QR6kWp/Whats-App-Image-2025-10-06-at-9-49-56-AM.jpg",
-        primaryColor: '#881337', // Deep Maroon
-    },
-    {
-        id: 'neww',
-        name: 'Yellow Maroon',
-        // Updated URL to remove placeholder text
-        bgImageUrl: "https://i.ibb.co/mL68Xsh/Whats-App-Image-2025-10-06-at-9-49-57-AM.jpg",
-        primaryColor: '#222222', // Deep Maroon
-    },
+    }
 ];
-// ------------------------------------
+
+
+
+// --- Detiy Logos ---
+const deityLogos: string[] = [
+    '/images/dieties/Shadisite-01.png',
+    '/images/dieties/Shadisite-02.png',
+    '/images/dieties/Shadisite-03.png',
+    '/images/dieties/Shadisite-04.png',
+    '/images/dieties/Shadisite-05.png',
+    '/images/dieties/Shadisite-06.png',
+    '/images/dieties/Shadisite-07.png',
+    '/images/dieties/Shadisite-08.png',
+    '/images/dieties/Shadisite-09.png',
+    '/images/dieties/Shadisite-10.png',
+]
+
 
 
 // --- EXTERNAL SCRIPT LOADING HOOK (FIX for PDF Library Not Found) ---
@@ -540,41 +444,50 @@ const drawContentForPage = (
     ctx: CanvasRenderingContext2D,
     pageFields: BiodataField[],
     template: Template,
-    logo: ImageState,
+    logo: string, // static image URL or base64
+    dietyText: string,
+    templateHeading: string,
     photo: ImageState,
     pageNumber: number = 1,
     prevPageEndGroup: CanonicalGroupId | null = null
 ) => {
-
     const width = CANVAS_WIDTH;
-
     let currentY: number;
+
+    // === Create and draw logo (static URL) ===
+    let logoImg: HTMLImageElement | null = null;
+    if (logo) {
+        logoImg = new Image();
+        logoImg.src = logo;
+    }
 
     if (pageNumber === 1) {
         // --- Header Elements ---
-        const logoWidth = 150;
-        const logoHeight = 60;
+        const logoWidth = 80;
+        const logoHeight = 80;
 
         const photoWidth = 120;
         const photoHeight = 160;
 
-        const spacingBelowLogo = 10;
         const spacingFromTop = PADDING;
+        const spacingBetweenHeaderItems = 10;
 
-        // Center logo horizontally at top
-        const logoX = (width - logoWidth) / 2;
+        // --- Logo (Top Left) ---
+        const logoX = PADDING;
         const logoY = spacingFromTop;
 
-        // Draw logo
-        if (logo.object) {
-            ctx.drawImage(logo.object, logoX, logoY, logoWidth, logoHeight);
+        if (logoImg && logoImg.complete) {
+            ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+        } else if (logoImg) {
+            logoImg.onload = () => {
+                ctx.drawImage(logoImg!, logoX, logoY, logoWidth, logoHeight);
+            };
         }
 
-        // Photo: top-right but slightly below logo
+        // --- Photo (Top Right) ---
         const photoX = width - PADDING - photoWidth;
-        const photoY = logoY + logoHeight + spacingBelowLogo;
+        const photoY = spacingFromTop;
 
-        // Draw photo border/background
         ctx.fillStyle = template.primaryColor;
         ctx.fillRect(photoX, photoY, photoWidth, photoHeight);
         ctx.fillStyle = '#ffffff';
@@ -584,8 +497,20 @@ const drawContentForPage = (
             ctx.drawImage(photo.object, photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
         }
 
-        // Start content *just below the logo*, from top-left
-        currentY = logoY + logoHeight + PADDING;
+        // --- Diety Text (Below Logo) ---
+        ctx.font = `bold ${FONT_SIZE + 4}px Pacifico, cursive`;
+        ctx.fillStyle = template.primaryColor;
+        const dietyTextY = logoY + logoHeight + spacingBetweenHeaderItems;
+        ctx.fillText(dietyText, logoX, dietyTextY);
+
+        // --- Template Heading (Below Diety Text) ---
+        ctx.font = `bold ${FONT_SIZE + 6}px Inter, sans-serif`;
+        ctx.fillStyle = '#1f2937';
+        const headingY = dietyTextY + FONT_SIZE + 10;
+        ctx.fillText(templateHeading, logoX, headingY);
+
+        // --- Start content area below heading ---
+        currentY = headingY + FONT_SIZE + 20;
     } else {
         // For next pages, start near top
         currentY = PADDING + FIELD_GAP;
@@ -597,17 +522,16 @@ const drawContentForPage = (
     const valueX = VALUE_COL_OFFSET;
     const valueWidth = VALUE_COL_WIDTH;
 
-    let lastCanonicalGroupId: CanonicalGroupId | null = pageNumber === 1
-        ? 'none' as CanonicalGroupId
-        : prevPageEndGroup || 'none' as CanonicalGroupId;
+    let lastCanonicalGroupId: CanonicalGroupId | null =
+        pageNumber === 1
+            ? ('none' as CanonicalGroupId)
+            : prevPageEndGroup || ('none' as CanonicalGroupId);
 
     pageFields.forEach((field) => {
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
-        // ✅ Skip drawing *everything* if value is empty
-        if (!field.value || field.value.trim() === '') {
-            return;
-        }
+        // ✅ Skip if value is empty
+        if (!field.value || field.value.trim() === '') return;
 
         // === Section Heading ===
         if (currentCanonicalGroupId !== lastCanonicalGroupId && currentCanonicalGroupId !== 'other') {
@@ -638,8 +562,9 @@ const drawContentForPage = (
 
         currentY = bottomY + FIELD_GAP;
     });
-
 };
+
+
 
 
 // --- Sub-Component: The Biodata Preview (The Canvas) ---
@@ -647,14 +572,16 @@ const drawContentForPage = (
 interface BiodataPreviewProps {
     pageContent: PageInfo;
     template: Template;
-    logo: ImageState;
+    logo: string;
+    dietyText: string;
+    templateHeading: string;
     photo: ImageState;
     pageNumber: number;
     // NEW: Passed down to control heading drawing
     prevPageEndGroup: CanonicalGroupId | null;
 }
 
-const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, photo, pageNumber, prevPageEndGroup }, ref) => {
+const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, dietyText, templateHeading, photo, pageNumber, prevPageEndGroup }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const setRefs = useCallback((node: HTMLCanvasElement | null) => {
@@ -699,7 +626,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
                     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 }
 
-                drawContentForPage(ctx, pageContent.fields, template, logo, photo, pageNumber, prevPageEndGroup);
+                drawContentForPage(ctx, pageContent.fields, template, logo, dietyText, templateHeading, photo, pageNumber, prevPageEndGroup);
             }
 
             if (bgImg.complete) {
@@ -712,7 +639,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
         drawBackgroundAndContent();
 
-    }, [pageContent, template, logo.object, photo.object, pageNumber, prevPageEndGroup, logo, photo]);
+    }, [pageContent, template, photo.object, pageNumber, prevPageEndGroup, logo, photo]);
 
 
     return (
@@ -751,7 +678,6 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
     onFieldChange,
     onLabelChange,
     onFieldMove,
-    onRemoveCustomField,
     fieldGroupIds
 }) => {
 
@@ -767,12 +693,15 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
     const isFirstInGroup = currentGroupIndex === 0;
     const isLastInGroup = currentGroupIndex === fieldGroupIds.length - 1;
 
+    // ✅ Determine if label should be editable
+    const isCustomField = field.id.startsWith('custom-');
 
     return (
         <div
             id={`field-input-${field.id}`}
-            className="flex items-start space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200"
+            className="flex items-center space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200"
         >
+            {/* Move buttons */}
             <div className="flex flex-col space-y-1 mt-1 flex-shrink-0">
                 <button
                     type="button"
@@ -793,19 +722,24 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
                 </button>
             </div>
+
+            {/* Fields */}
             <div className="flex-1 min-w-0 flex flex-col md:flex-row md:space-x-4">
                 <div className="w-full md:w-2/5 mb-2 md:mb-0">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Field Label</label>
                     <input
                         type="text"
                         value={field.label}
                         onChange={handleLabelInput}
-                        className="w-full text-sm font-semibold p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
+                        className={`w-full text-sm font-semibold p-2 border rounded-lg shadow-sm transition duration-150 ${isCustomField
+                            ? 'border-gray-300 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500'
+                            : 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
+                            }`}
                         placeholder="e.g., Full Name"
+                        readOnly={!isCustomField} // ✅ make default fields readonly
+                        disabled={!isCustomField}  // ✅ disable non-custom labels
                     />
                 </div>
                 <div className="w-full md:w-3/5">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Field Value</label>
                     <textarea
                         value={field.value}
                         onChange={handleValueChange}
@@ -815,7 +749,9 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                     />
                 </div>
             </div>
-            {field.type === 'custom' && (
+
+            {/* Delete only for custom fields */}
+            {/* {isCustomField && (
                 <button
                     type="button"
                     onClick={() => onRemoveCustomField(field.id)}
@@ -824,10 +760,11 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
                 </button>
-            )}
+            )} */}
         </div>
     );
 });
+
 
 FieldInput.displayName = 'FieldInput';
 
@@ -838,7 +775,9 @@ const BiodataGenerator: React.FC = () => {
     const [templatePage, setTemplatePage] = useState(0);
     const [fields, setFields] = useState<BiodataField[]>(initialFields);
     const [selectedTemplate, setSelectedTemplate] = useState<Template>(templates[0]);
-    const [logo, setLogo] = useState<ImageState>({ url: PLACEHOLDER_LOGO_URL, object: null });
+    const [selectedLogo, setLogo] = useState<string>(deityLogos[0]);
+    const [dietyText, setDietyText] = useState<string>('');
+    const [templateHeading, setTemplateHeading] = useState<string>('');
     const [photo, setPhoto] = useState<ImageState>({ url: PLACEHOLDER_PHOTO_URL, object: null });
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
@@ -921,7 +860,7 @@ const BiodataGenerator: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        loadImage(PLACEHOLDER_LOGO_URL, setLogo);
+        // loadImage(PLACEHOLDER_LOGO_URL, setLogo);
         loadImage(PLACEHOLDER_PHOTO_URL, setPhoto);
         templates.forEach(t => {
             if (t.bgImageUrl) {
@@ -1043,13 +982,13 @@ const BiodataGenerator: React.FC = () => {
         setFields(prevFields => prevFields.filter(field => field.id !== id));
     }, []);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, imageType: 'logo' | 'photo') => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const tempUrl = URL.createObjectURL(file);
-            const setter = imageType === 'logo' ? setLogo : setPhoto;
+            const setter = setPhoto;
 
-            const currentUrl = imageType === 'logo' ? logo.url : photo.url;
+            const currentUrl = photo.url;
             if (currentUrl && currentUrl.startsWith('blob:')) {
                 URL.revokeObjectURL(currentUrl);
             }
@@ -1125,7 +1064,9 @@ const BiodataGenerator: React.FC = () => {
                     ctx,
                     pageInfo.fields,
                     selectedTemplate,
-                    logo,
+                    selectedLogo,
+                    dietyText,
+                    templateHeading,
                     photo,
                     pageNum,
                     pageInfo.prevPageEndGroup
@@ -1151,7 +1092,7 @@ const BiodataGenerator: React.FC = () => {
             setTimeout(() => setGenerationStatus(null), 3000);
             setIsGenerating(false);
         }
-    }, [fields, selectedTemplate, logo, photo, pageContentMap]);
+    }, [fields, selectedTemplate, selectedLogo, dietyText, templateHeading, photo, pageContentMap]);
 
 
     // --- ImageUpload Component (Defined inside main component to access handlers) ---
@@ -1196,35 +1137,57 @@ const BiodataGenerator: React.FC = () => {
         // --- Template Pagination Logic ---
         const TEMPLATES_PER_PAGE = 10;
         const totalTemplatePages = Math.ceil(templates.length / TEMPLATES_PER_PAGE);
-        const paginatedTemplates = templates.slice(templatePage * TEMPLATES_PER_PAGE, (templatePage + 1) * TEMPLATES_PER_PAGE);
+        const paginatedTemplates = templates.slice(
+            templatePage * TEMPLATES_PER_PAGE,
+            (templatePage + 1) * TEMPLATES_PER_PAGE
+        );
 
+        // --- Helper: Add custom field below a specific field ---
+        const addCustomFieldBelow = (
+            groupType: 'personal' | 'family' | 'custom',
+            afterFieldId: string
+        ) => {
+            setFields(prevFields => {
+                const index = prevFields.findIndex(f => f.id === afterFieldId);
+                if (index === -1) return prevFields;
 
-        // Filter fields based on the current step group
+                const afterField = prevFields[index];
+
+                const newField: BiodataField = {
+                    id: `custom-${Date.now()}`,
+                    label: 'New Custom Field',
+                    value: '',
+                    type: 'text' as FieldType, // ✅ ensures correct typing
+                    groupId: afterField.groupId, // ✅ required field
+                };
+
+                const updatedFields = [...prevFields];
+                updatedFields.splice(index + 1, 0, newField);
+                return updatedFields;
+            });
+        };
+
+        // --- Filter fields for current step ---
         const groupIds = getCurrentStepFieldIds(step);
         const filteredFields = fields.filter(f => groupIds.includes(f.id));
-
-        const addCustomButton = (groupType: 'personal' | 'family' | 'custom', label: string) => (
-            <div className="flex justify-end mt-6">
-                <button
-                    onClick={() => addCustomField(groupType)}
-                    // Button UI matches the 'Back' button style and is aligned to the right
-                    className="px-6 py-2 border border-gray-300 rounded-full text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition duration-150 cursor-pointer shadow-sm"
-                >
-                    {label}
-                </button>
-            </div>
-        );
 
         switch (step) {
             case 1:
                 return (
                     <>
-                        <h2 className="text-2xl font-bold mb-4 text-black">Step 1: Template & Photo Setup</h2>
-                        <p className="text-gray-600 mb-6">Select a visual theme and provide your photos.</p>
+                        <h2 className="text-2xl font-bold mb-4 text-black">
+                            Step 1: Template & Photo Setup
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                            Select a visual theme and provide your photos.
+                        </p>
 
+                        {/* Template Grid */}
                         <div className="space-y-4 mb-8">
-                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Select Template</h3>
-                            
+                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                                Select Template
+                            </h3>
+
                             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {paginatedTemplates.map((template, index) => (
                                     <div
@@ -1240,24 +1203,24 @@ const BiodataGenerator: React.FC = () => {
                                             alt={template.name}
                                             className="w-full h-auto rounded-sm object-cover"
                                         />
-                                        {/* <div className="font-semibold text-sm text-center mt-2">{template.name}</div> */}
                                     </div>
                                 ))}
                             </div>
 
+                            {/* Pagination */}
                             {totalTemplatePages > 1 && (
                                 <div className="flex items-center justify-end gap-4 mt-3">
-                                    {/* Previous Button */}
+                                    {/* Prev */}
                                     <button
-                                        onClick={() => setTemplatePage(p => Math.max(0, p - 1))}
+                                        onClick={() =>
+                                            setTemplatePage(p => Math.max(0, p - 1))
+                                        }
                                         disabled={templatePage === 0}
-                                        className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 cursor-pointer
-                                            ${templatePage === 0
-                                                ? "opacity-40 cursor-not-allowed"
-                                                : "hover:bg-gray-100 active:scale-95"
+                                        className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 cursor-pointer ${templatePage === 0
+                                            ? 'opacity-40 cursor-not-allowed'
+                                            : 'hover:bg-gray-100 active:scale-95'
                                             }`}
                                     >
-                                        {/* Left Arrow SVG */}
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"
@@ -1266,26 +1229,34 @@ const BiodataGenerator: React.FC = () => {
                                             stroke="currentColor"
                                             className="w-5 h-5"
                                         >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M15 19l-7-7 7-7"
+                                            />
                                         </svg>
                                     </button>
 
-                                    {/* Page Indicator */}
+                                    {/* Indicator */}
                                     <span className="font-medium text-gray-600 select-none text-sm">
                                         Page {templatePage + 1} / {totalTemplatePages}
                                     </span>
 
-                                    {/* Next Button */}
+                                    {/* Next */}
                                     <button
-                                        onClick={() => setTemplatePage(p => Math.min(totalTemplatePages - 1, p + 1))}
-                                        disabled={templatePage === totalTemplatePages - 1}
-                                        className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 cursor-pointer
-                                            ${templatePage === totalTemplatePages - 1
-                                                ? "opacity-40 cursor-not-allowed"
-                                                : "hover:bg-gray-100 active:scale-95"
+                                        onClick={() =>
+                                            setTemplatePage(p =>
+                                                Math.min(totalTemplatePages - 1, p + 1)
+                                            )
+                                        }
+                                        disabled={
+                                            templatePage === totalTemplatePages - 1
+                                        }
+                                        className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 cursor-pointer ${templatePage === totalTemplatePages - 1
+                                            ? 'opacity-40 cursor-not-allowed'
+                                            : 'hover:bg-gray-100 active:scale-95'
                                             }`}
                                     >
-                                        {/* Right Arrow SVG */}
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"
@@ -1294,99 +1265,239 @@ const BiodataGenerator: React.FC = () => {
                                             stroke="currentColor"
                                             className="w-5 h-5"
                                         >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M9 5l7 7-7 7"
+                                            />
                                         </svg>
                                     </button>
                                 </div>
-
                             )}
-
                         </div>
 
-                        <div className="space-y-6">
-                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Upload Photos</h3>
-                            <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
-                                <ImageUpload
-                                    label="User Photo (Top Right)"
-                                    imageType="photo"
-                                    onUpload={handleImageUpload}
-                                    currentUrl={photo.url}
-                                />
-                                <ImageUpload
-                                    label="Organization Logo (Top Left)"
-                                    imageType="logo"
-                                    onUpload={handleImageUpload}
-                                    currentUrl={logo.url}
-                                />
+                        <div className="space-y-4 mb-8">
+                            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                                Select Diety Logo
+                            </h3>
+
+                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+                                {deityLogos.map((logo, index) => (
+                                    <div
+                                        key={`${logo}-${index}`}
+                                        onClick={() => setLogo(logo)}
+                                        className={`p-1 w-[80px] h-[80px] border-2 rounded-lg cursor-pointer transition duration-200 shadow-md ${selectedLogo === logo
+                                            ? `${primaryBorderClass} ${primaryBgClass} ring-4 ${primaryRingClass}`
+                                            : 'border-gray-200 hover:border-fuchsia-400'
+                                            }`}
+                                    >
+                                        <img
+                                            src={logo}
+                                            alt="logo"
+                                            className="h-[100%] w-100 object-contain"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Diety Text and Template Heading Fields */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-12">
+                                <div>
+                                    <label className="block font-medium text-gray-700 mb-3">
+                                        Diety Text
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={dietyText}
+                                        onChange={(e) => setDietyText(e.target.value)}
+                                        placeholder="Enter diety name or text"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-medium text-gray-700 mb-3">
+                                        Template Heading
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={templateHeading}
+                                        onChange={(e) => setTemplateHeading(e.target.value)}
+                                        placeholder="Enter heading for the template"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>
                 );
+
             case 2:
             case 3:
                 const stepTitle = step === 2 ? 'Personal Info' : 'Family Info';
-                const stepSubtitle = step === 2 ? 'Customize your primary personal details and add custom entries for this section.' : 'Enter details about your family, preferences, and add custom entries specific to this section.';
+                const stepSubtitle =
+                    step === 2
+                        ? 'Customize your personal details. Click + beside a field to add a new one below.'
+                        : 'Enter family details and click + beside a field to add a new one below.';
                 const addGroup = step === 2 ? 'personal' : 'family';
-                const addLabel = step === 2 ? '+ Add More Personal Detail' : '+ Add More Family Detail';
 
                 return (
                     <>
-                        <h2 className="text-2xl font-bold mb-4 text-black">Step {step}: Edit {stepTitle}</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-black">
+                            Step {step}: Edit {stepTitle}
+                        </h2>
                         <p className="text-gray-600 mb-6">{stepSubtitle}</p>
+
+                        <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 mb-6">
+                            <ImageUpload
+                                label=""
+                                imageType="photo"
+                                onUpload={handleImageUpload}
+                                currentUrl={photo.url}
+                            />
+                        </div>
+
                         <div
                             ref={scrollRef}
                             className="space-y-2 max-h-[500px] overflow-y-auto pr-2"
                         >
                             {filteredFields.map((field, index) => (
-                                <FieldInput
+                                <div
                                     key={field.id}
-                                    field={field}
-                                    index={index}
-                                    isLast={index === filteredFields.length - 1}
-                                    onFieldChange={handleFieldChange}
-                                    onLabelChange={handleLabelChange}
-                                    onFieldMove={handleFieldMove}
-                                    onRemoveCustomField={removeCustomField}
-                                    fieldGroupIds={groupIds}
-                                />
+                                    className="relative group flex items-center gap-2"
+                                >
+                                    <div className="flex-1">
+                                        <FieldInput
+                                            field={field}
+                                            index={index}
+                                            isLast={index === filteredFields.length - 1}
+                                            onFieldChange={handleFieldChange}
+                                            onLabelChange={handleLabelChange}
+                                            onFieldMove={handleFieldMove}
+                                            onRemoveCustomField={removeCustomField}
+                                            fieldGroupIds={groupIds}
+                                        />
+                                    </div>
+
+                                    {/* Right-side action buttons */}
+                                    <div className="flex flex-col items-center gap-2">
+                                        {/* ➕ Add Field Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => addCustomFieldBelow(addGroup as 'personal' | 'family' | 'custom', field.id)}
+                                            className="cursor-pointer transition-all duration-150 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white border border-fuchsia-300 w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                                            title="Add custom field below"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                strokeWidth="2"
+                                                stroke="currentColor"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </button>
+
+                                        {/* 🗑️ Delete button — only for custom fields */}
+                                        {field.id.startsWith('custom-') && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeCustomField(field.id)}
+                                                className="cursor-pointer transition-all duration-150 text-red-500 hover:bg-red-500 hover:text-white border border-red-300 w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                                                title="Delete custom field"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
                             ))}
                         </div>
-                        {addCustomButton(addGroup as 'personal' | 'family', addLabel)}
                     </>
                 );
+
             case 4:
                 return (
                     <>
-                        <h2 className="text-2xl font-bold mb-4 text-black">Step 4: Contact & Download</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-black">
+                            Step 4: Contact & Download
+                        </h2>
                         <p className="text-gray-600 mb-6">
-                            Enter contact details, any final notes, and add **Custom Fields**. Use the download button below to generate your multi-page PDF.
+                            Enter contact details and click + beside a field to add
+                            a new one below. Use the button below to download your
+                            biodata PDF.
                         </p>
+
                         <div
                             ref={scrollRef}
                             className="space-y-2 max-h-[350px] overflow-y-auto pr-2"
                         >
                             {filteredFields.map((field, index) => (
-                                <FieldInput
+                                <div
                                     key={field.id}
-                                    field={field}
-                                    index={index}
-                                    isLast={index === filteredFields.length - 1}
-                                    onFieldChange={handleFieldChange}
-                                    onLabelChange={handleLabelChange}
-                                    onFieldMove={handleFieldMove}
-                                    onRemoveCustomField={removeCustomField}
-                                    fieldGroupIds={groupIds}
-                                />
+                                    className="relative group flex items-center gap-2"
+                                >
+                                    {/* Field input */}
+                                    <div className="flex-1">
+                                        <FieldInput
+                                            field={field}
+                                            index={index}
+                                            isLast={index === filteredFields.length - 1}
+                                            onFieldChange={handleFieldChange}
+                                            onLabelChange={handleLabelChange}
+                                            onFieldMove={handleFieldMove}
+                                            onRemoveCustomField={removeCustomField}
+                                            fieldGroupIds={groupIds}
+                                        />
+                                    </div>
+
+                                    {/* Right-side buttons */}
+                                    <div className="flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                        {/* ➕ Add Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => addCustomFieldBelow('custom', field.id)}
+                                            className="text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white border border-fuchsia-300 w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                                            title="Add custom field below"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                strokeWidth="2"
+                                                stroke="currentColor"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </button>
+
+                                        {/* 🗑️ Delete Button — only for custom fields */}
+                                        {field.id.startsWith('custom-') && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeCustomField(field.id)}
+                                                className="text-red-500 hover:bg-red-500 hover:text-white border border-red-300 w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                                                title="Delete custom field"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             ))}
                         </div>
-                        {addCustomButton('custom', '+ Add Custom Detail')}
 
+                        {/* Download Section */}
                         <div className="mt-8 pt-4 border-t border-gray-200">
                             <h3 className="text-xl font-semibold mb-4 text-gray-700">Download</h3>
                             <button
                                 onClick={generatePdf}
                                 disabled={isGenerating || !isLibrariesLoaded}
-                                className={`w-full flex items-center justify-center px-10 py-4 border border-transparent text-base font-medium rounded-xl shadow-xl text-white transition-all duration-200 cursor-pointer ${(!isLibrariesLoaded || isGenerating)
+                                className={`w-full flex items-center justify-center px-10 py-4 border border-transparent text-base font-medium rounded-xl shadow-xl text-white transition-all duration-200 cursor-pointer ${!isLibrariesLoaded || isGenerating
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-fuchsia-600 hover:bg-fuchsia-700 focus:ring-4 focus:ring-fuchsia-500 focus:ring-offset-2'
                                     }`}
@@ -1410,6 +1521,7 @@ const BiodataGenerator: React.FC = () => {
                                     'Download Final Biodata PDF (A4)'
                                 )}
                             </button>
+
                             {generationStatus === 'error' && (
                                 <p className="mt-2 text-sm text-red-600 text-center">
                                     An error occurred during PDF generation. Please ensure your network is stable.
@@ -1417,13 +1529,16 @@ const BiodataGenerator: React.FC = () => {
                             )}
                         </div>
                     </>
+
                 );
+
             default:
                 return <p className="text-gray-500">Select a step to begin.</p>;
         }
     };
 
     const STEP_LABELS = ['Template', 'Personal Info', 'Family Info', 'Contact'];
+
 
     // --- Main Render ---
     return (
@@ -1535,7 +1650,9 @@ const BiodataGenerator: React.FC = () => {
                                 ref={currentPageIndex === 0 ? canvasRef : undefined}
                                 pageContent={currentPageData}
                                 template={selectedTemplate}
-                                logo={logo}
+                                logo={selectedLogo}
+                                dietyText={dietyText}
+                                templateHeading={templateHeading}
                                 photo={photo}
                                 pageNumber={currentPageIndex + 1}
                                 prevPageEndGroup={prevGroup}
