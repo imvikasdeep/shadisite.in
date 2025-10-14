@@ -63,11 +63,13 @@ type CanonicalGroupId = 'personal' | 'family' | 'contact' | 'other';
 type FieldGroupId = 'personal' | 'family' | 'contact' | 'custom-personal' | 'custom-family' | 'custom';
 
 interface BiodataField {
-    id: string; // Unique ID (e.g., 'dob-0', 'custom-12345')
-    label: string; // The single label for this line item (e.g., 'Date of Birth')
-    value: string; // The single value for this line item (e.g., '01 Jan 1995')
-    type: FieldType;
+    id: string;
+    label: string;
+    value: string;
+    type: FieldType; // 'mandatory' | 'custom'
     groupId: FieldGroupId;
+    inputType: InputFieldType; // 'text' | 'textarea' | 'select' | 'radio' | 'date' | 'time'
+    options?: string[]; // only for select/radio
 }
 
 interface Template {
@@ -105,34 +107,85 @@ const GROUP_TITLES: Record<'personal' | 'family' | 'contact', string> = {
 
 
 // --- INITIAL DATA & STEP GROUPINGS (COMPLEX STRUCTURE) ---
+export type InputFieldType = 'text' | 'textarea' | 'date' | 'time' | 'select' | 'radio';
 
 interface ComplexField {
     id: string;
     label: string;
     value: string;
+    type: InputFieldType;
     group: 'personal' | 'family' | 'contact';
+    options?: string[]; // Optional, for select/radio fields
 }
 
 const INITIAL_COMPLEX_FIELDS: ComplexField[] = [
-    // Step 2: Personal Details (Group: 'personal')
-    { id: 'name', label: 'Full Name', value: '', group: 'personal' },
-    { id: 'dob', label: 'Date of Birth / Age', value: '', group: 'personal' },
-    { id: 'height', label: 'Height / Weight', value: '', group: 'personal' },
-    { id: 'education', label: 'Education', value: '', group: 'personal' },
-    { id: 'occupation', label: 'Occupation', value: '', group: 'personal' },
-    { id: 'hobbies', label: 'Hobbies / Interests', value: '', group: 'personal' },
-    { id: 'religion', label: 'Religion / Caste / Gotra', value: '', group: 'personal' },
+    // ---------------- PERSONAL ----------------
+    { id: 'name', label: 'Full Name', value: '', type: 'text', group: 'personal' },
+    { id: 'dob', label: 'Date of Birth', value: '', type: 'date', group: 'personal' },
+    { id: 'tob', label: 'Time of Birth', value: '', type: 'time', group: 'personal' },
+    { id: 'pob', label: 'Place of Birth', value: '', type: 'text', group: 'personal' },
+    { id: 'gender', label: 'Gender', value: '', type: 'radio', group: 'personal', options: ['Male', 'Female', 'Transgender', 'Other'] },
+    { id: 'marital_status', label: 'Marital Status', value: '', type: 'select', group: 'personal', options: ['Unmarried (Single)', 'Divorsed', 'Widowed', 'Divorse Awaiting', 'Seperated', 'Annulled'] },
+    { id: 'religion', label: 'Religion', value: '', type: 'select', group: 'personal', options: ['Hindu', 'Muslim', 'Christian', 'Jewish', 'Sikh', 'Buddhist', 'Jain', 'Parsi', 'Inter-Religion', 'Spiritual - No Religious', 'No Religion'] },
+    { id: 'caste', label: 'Caste', value: '', type: 'text', group: 'personal' },
+    { id: 'sub_caste', label: 'Sub Caste', value: '', type: 'text', group: 'personal' },
+    { id: 'manglik', label: 'Manglik', value: '', type: 'radio', group: 'personal', options: ['Yes', 'No', 'Partial (Anshik)', "Don't Believe"] },
+    { id: 'rashi', label: 'Rashi', value: '', type: 'select', group: 'personal', options: ['Mesh (Aries)', 'Vrishabha (Taurus)', 'Mithuna (Gemini)', 'Karka (Cancer)', 'Simha (Leo)', 'Kanya (Virgo)', 'Tula (Libra)', 'Vrischika (Scorpio)', 'Dhanur (Sagittarious)', 'Makara (Capricorn)', 'Kumbha (Aquarius)', 'Meena (Pisces)'] },
+    { id: 'nakshatra', label: 'Nakshatra', value: '', type: 'select', group: 'personal', options: ['Aswini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashirsha', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Poorva Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Poorvashada', 'Uthrashada', 'Shravana', 'Dhanishtha', 'Shathabhisha', 'Poorva Bhadrapada', 'Uttara Bhadrapada', 'Revati'] },
+    { id: 'gotra', label: 'Gotra', value: '', type: 'text', group: 'personal' },
+    { id: 'complex', label: 'Complex', value: '', type: 'select', group: 'personal', options: ['Very Fair', 'Fair', 'Medium', 'Wheatish', 'Brown', 'Dark'] },
+    { id: 'body_type', label: 'Body Type', value: '', type: 'select', group: 'personal', options: ['Slim', 'Average', 'Fit', 'Athletic', 'Heavy'] },
+    { id: 'height', label: 'Height', value: '', type: 'text', group: 'personal' },
+    { id: 'weight', label: 'Weight', value: '', type: 'text', group: 'personal' },
+    { id: 'blood_group', label: 'Blood Group', value: '', type: 'select', group: 'personal', options: ['A+ve', 'A-ve', 'B+ve', 'B-ve', 'AB+ve', 'AB-ve', 'O+ve', 'O-ve'] },
+    { id: 'mother_tongue', label: 'Mother Tongue', value: '', type: 'select', group: 'personal', options: ['Hindi', 'Punjabi', 'Haryanvi', 'Himachali', 'Kashmiri', 'Sindhi', 'Urdu', 'Marathi', 'Gujarati', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Oriya', 'Sikkim', 'Nepali', 'English'] },
+    { id: 'community', label: 'Community', value: '', type: 'select', group: 'personal', options: ['Hindi', 'Punjabi', 'Sindhi', 'Jain', 'Rajasthani', 'Gujarati', 'Bengali', 'Kannada', 'Telegu', 'Brij', 'Nepali', 'English', 'Haryanvi', 'Pahari', 'Marathi'] },
+    { id: 'education', label: 'Education', value: '', type: 'text', group: 'personal' },
+    { id: 'institution', label: 'Institution Name', value: '', type: 'text', group: 'personal' },
+    { id: 'occupation', label: 'Job/Occupation', value: '', type: 'text', group: 'personal' },
+    { id: 'job_place', label: 'Job Place', value: '', type: 'text', group: 'personal' },
+    { id: 'job_experience', label: 'Job Experience', value: '', type: 'text', group: 'personal' },
+    { id: 'annual_income', label: 'Annual Income', value: '', type: 'text', group: 'personal' },
+    { id: 'diet', label: 'Diet', value: '', type: 'radio', group: 'personal', options: ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan'] },
+    { id: 'hobbies', label: 'Hobbies', value: '', type: 'text', group: 'personal' },
+    { id: 'interests', label: 'Interests', value: '', type: 'text', group: 'personal' },
+    { id: 'language_known', label: 'Language Known', value: '', type: 'text', group: 'personal' },
+    { id: 'about_myself', label: 'About Myself', value: '', type: 'textarea', group: 'personal' },
+    { id: 'expectation', label: 'Expectation', value: '', type: 'textarea', group: 'personal' },
 
-    // Step 3: Family Details (Group: 'family')
-    { id: 'father', label: 'Father\'s Name / Occupation', value: '', group: 'family' },
-    { id: 'mother', label: 'Mother\'s Name / Status', value: '', group: 'family' },
-    { id: 'siblings', label: 'Siblings', value: '', group: 'family' },
-    { id: 'familyType', label: 'Family Type / Values', value: '', group: 'family' },
-    { id: 'partnerPref', label: 'Partner Preference Summary (Long field to test pagination)', value: '', group: 'family' },
+    // ---------------- FAMILY ----------------
+    { id: 'grand_father_name', label: 'Grand Father Name', value: '', type: 'text', group: 'family' },
+    { id: 'grand_father_occupation', label: 'Grand Father Occupation', value: '', type: 'text', group: 'family' },
+    { id: 'grand_mother_name', label: 'Grand Mother Name', value: '', type: 'text', group: 'family' },
+    { id: 'grand_mother_occupation', label: 'Grand Mother Occupation', value: '', type: 'text', group: 'family' },
+    { id: 'father_name', label: 'Father Name', value: '', type: 'text', group: 'family' },
+    { id: 'father_occupation', label: 'Father Occupation', value: '', type: 'text', group: 'family' },
+    { id: 'mother_name', label: 'Mother Name', value: '', type: 'text', group: 'family' },
+    { id: 'mother_occupation', label: 'Mother Occupation', value: '', type: 'text', group: 'family' },
+    { id: 'brothers', label: 'Brothers', value: '', type: 'text', group: 'family' },
+    { id: 'sisters', label: 'Sisters', value: '', type: 'text', group: 'family' },
+    { id: 'kids', label: 'Kids', value: '', type: 'text', group: 'family' },
+    { id: 'relatives', label: 'Relatives', value: '', type: 'text', group: 'family' },
+    { id: 'family_language', label: 'Family Language', value: '', type: 'text', group: 'family' },
+    { id: 'family_status', label: 'Family Status', value: '', type: 'select', group: 'family', options: ['Affluent', 'Upper Middle Class', 'Middle Class', 'Lower Middle Class', 'Average', 'Lower Class'] },
+    { id: 'family_type', label: 'Family Type', value: '', type: 'select', group: 'family', options: ['Joint Family', 'Nuclear Family', 'Seperated', 'Other'] },
+    { id: 'family_values', label: 'Family Values', value: '', type: 'select', group: 'family', options: ['Orthodox', 'Conservative', 'Moderate', 'Liberal'] },
+    { id: 'family_income', label: 'Family Income', value: '', type: 'text', group: 'family' },
+    { id: 'family_assets', label: 'Family Assets', value: '', type: 'text', group: 'family' },
+    { id: 'about_family', label: 'About Family', value: '', type: 'textarea', group: 'family' },
 
-    // Step 4: Contact & Other Details (Group: 'contact')
-    { id: 'contact', label: 'Contact Details', value: '', group: 'contact' },
-    { id: 'appendix', label: 'Appendix Note', value: '', group: 'contact' },
+    // ---------------- CONTACT ----------------
+    { id: 'personal_contact', label: 'Personal Contact', value: '', type: 'text', group: 'contact' },
+    { id: 'contact_persons', label: 'Contact Persons', value: '', type: 'select', group: 'contact', options: ['Father', 'Mother', 'Brother', 'Sister', 'Relative'] },
+    { id: 'email', label: 'E-mail', value: '', type: 'text', group: 'contact' },
+    { id: 'phone_number', label: 'Phone Number', value: '', type: 'text', group: 'contact' },
+    { id: 'mobile_number', label: 'Mobile No.', value: '', type: 'text', group: 'contact' },
+    { id: 'home_town', label: 'Home Town', value: '', type: 'text', group: 'contact' },
+    { id: 'permanent_address', label: 'Permanent Address', value: '', type: 'text', group: 'contact' },
+    { id: 'present_address', label: 'Present Address', value: '', type: 'text', group: 'contact' },
+    { id: 'preferred_contact_time', label: 'Preferred Contact Time', value: '', type: 'text', group: 'contact' },
+    { id: 'picture_profile', label: 'Picture Profile', value: '', type: 'text', group: 'contact' },
+    { id: 'notes', label: 'Notes', value: '', type: 'textarea', group: 'contact' }
 ];
 
 /**
@@ -149,22 +202,26 @@ const flattenFields = (complexFields: ComplexField[]): BiodataField[] => {
         const finalCount = Math.max(labels.length, values.length, 1);
 
         for (let i = 0; i < finalCount; i++) {
-            const label = (labels[i] || '').replace(':', '').trim(); // Remove colon from label and trim
+            const label = (labels[i] || '').replace(':', '').trim();
             const value = (values[i] || '').trim();
 
             if (label || value) {
                 flatFields.push({
                     id: `${cf.id}-${i}`,
-                    label: label,
-                    value: value,
-                    type: 'mandatory',
-                    groupId: cf.group,
+                    label,
+                    value,
+                    type: 'mandatory',        // logic type
+                    groupId: cf.group,        // 'personal' | 'family' | 'contact'
+                    inputType: cf.type,       // actual HTML input type
+                    options: cf.options,      // select/radio options
                 });
             }
         }
     });
+
     return flatFields;
 };
+
 
 // Generate the initial flat list of fields
 const initialFields: BiodataField[] = flattenFields(INITIAL_COMPLEX_FIELDS);
@@ -466,8 +523,8 @@ const drawContentForPage = (
         const logoWidth = 80;
         const logoHeight = 80;
 
-        const photoWidth = 120;
-        const photoHeight = 160;
+        const photoWidth = 110;
+        const photoHeight = 140;
 
         const spacingFromTop = PADDING;
         const spacingBetweenHeaderItems = 10;
@@ -500,17 +557,21 @@ const drawContentForPage = (
         // --- Diety Text (Below Logo) ---
         ctx.font = `bold ${FONT_SIZE + 4}px Pacifico, cursive`;
         ctx.fillStyle = template.primaryColor;
-        const dietyTextY = logoY + logoHeight + spacingBetweenHeaderItems;
+
+        // Added a bit more space below logo (was logoHeight + spacingBetweenHeaderItems)
+        const dietyTextY = logoY + logoHeight + spacingBetweenHeaderItems + 6;
         ctx.fillText(dietyText, logoX, dietyTextY);
 
         // --- Template Heading (Below Diety Text) ---
-        ctx.font = `bold ${FONT_SIZE + 6}px Inter, sans-serif`;
+        // Added extra space below dietyText and increased font size
+        const headingFontSize = FONT_SIZE + 15; // was +6 before
+        ctx.font = `bold ${headingFontSize}px Inter, sans-serif`;
         ctx.fillStyle = '#1f2937';
-        const headingY = dietyTextY + FONT_SIZE + 10;
+        const headingY = dietyTextY + FONT_SIZE + 20; // increased spacing below diety text
         ctx.fillText(templateHeading, logoX, headingY);
 
         // --- Start content area below heading ---
-        currentY = headingY + FONT_SIZE + 20;
+        currentY = headingY + headingFontSize + 24; // slightly more space before fields
     } else {
         // For next pages, start near top
         currentY = PADDING + FIELD_GAP;
@@ -558,14 +619,11 @@ const drawContentForPage = (
         // === Value ===
         ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
         ctx.fillStyle = '#1f2937';
-        const bottomY = wrapTextAndGetLastY(ctx, field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
+        const bottomY = wrapTextAndGetLastY(ctx, ': ' + field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
 
         currentY = bottomY + FIELD_GAP;
     });
 };
-
-
-
 
 // --- Sub-Component: The Biodata Preview (The Canvas) ---
 
@@ -671,6 +729,8 @@ interface FieldInputProps {
     onFieldMove: (id: string, direction: 'up' | 'down') => void;
     onRemoveCustomField: (id: string) => void;
     fieldGroupIds: string[];
+    // Pass ComplexField metadata for input rendering
+    inputMeta?: ComplexField;
 }
 
 const FieldInput: React.FC<FieldInputProps> = React.memo(({
@@ -678,30 +738,25 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
     onFieldChange,
     onLabelChange,
     onFieldMove,
+    onRemoveCustomField,
     fieldGroupIds
 }) => {
-
-    const handleValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         onFieldChange(field.id, e.target.value);
     };
 
-    const handleLabelInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onLabelChange(field.id, e.target.value);
     };
 
+    const isCustomField = field.id.startsWith('custom-');
     const currentGroupIndex = fieldGroupIds.findIndex(id => id === field.id);
     const isFirstInGroup = currentGroupIndex === 0;
     const isLastInGroup = currentGroupIndex === fieldGroupIds.length - 1;
 
-    // ✅ Determine if label should be editable
-    const isCustomField = field.id.startsWith('custom-');
-
     return (
-        <div
-            id={`field-input-${field.id}`}
-            className="flex items-center space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200"
-        >
-            {/* Move buttons */}
+        <div className="flex items-start space-x-3 p-3 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-lg transition duration-200">
+            {/* Move Buttons */}
             <div className="flex flex-col space-y-1 mt-1 flex-shrink-0">
                 <button
                     type="button"
@@ -710,7 +765,9 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                     className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded-full transition duration-150"
                     title="Move Up"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" />
+                    </svg>
                 </button>
                 <button
                     type="button"
@@ -719,52 +776,89 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
                     className="p-1 text-pink-500 hover:text-pink-600 disabled:opacity-30 rounded-full transition duration-150"
                     title="Move Down"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" />
+                    </svg>
                 </button>
             </div>
 
-            {/* Fields */}
+            {/* Field Inputs */}
             <div className="flex-1 min-w-0 flex flex-col md:flex-row md:space-x-4">
+                {/* Label */}
                 <div className="w-full md:w-2/5 mb-2 md:mb-0">
                     <input
                         type="text"
                         value={field.label}
-                        onChange={handleLabelInput}
+                        onChange={handleLabelChange}
                         className={`w-full text-sm font-semibold p-2 border rounded-lg shadow-sm transition duration-150 ${isCustomField
                             ? 'border-gray-300 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500'
                             : 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
                             }`}
-                        placeholder="e.g., Full Name"
-                        readOnly={!isCustomField} // ✅ make default fields readonly
-                        disabled={!isCustomField}  // ✅ disable non-custom labels
+                        placeholder="Field Label"
+                        readOnly={!isCustomField}
+                        disabled={!isCustomField}
                     />
                 </div>
+
+                {/* Value */}
                 <div className="w-full md:w-3/5">
-                    <textarea
-                        value={field.value}
-                        onChange={handleValueChange}
-                        rows={field.value.length > 50 ? 3 : 1}
-                        className="w-full text-sm p-2 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
-                        placeholder={`Enter ${field.label}...`}
-                    />
+
+                    {field.inputType === 'textarea' && (
+                        <textarea
+                            value={field.value}
+                            onChange={handleChange}
+                            rows={field.value.length > 50 ? 3 : 1}
+                            className="w-full text-sm p-2 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
+                            placeholder={`Enter ${field.label}...`}
+                        />
+                    )}
+
+                    {['text', 'date', 'time'].includes(field.inputType) && (
+                        <input
+                            type={field.inputType}
+                            value={field.value}
+                            onChange={handleChange}
+                            className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
+                            placeholder={`Enter ${field.label}...`}
+                        />
+                    )}
+
+                    {field.inputType === 'select' && field.options && (
+                        <select
+                            value={field.value}
+                            onChange={handleChange}
+                            className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition duration-150 shadow-sm"
+                        >
+                            <option value="">Select {field.label}</option>
+                            {field.options.map((opt, idx) => (
+                                <option key={idx} value={opt}>{opt}</option>
+                            ))}
+                        </select>
+                    )}
+
+                    {field.inputType === 'radio' && field.options && (
+                        <div className="flex flex-wrap gap-4">
+                            {field.options.map((opt, idx) => (
+                                <label key={idx} className="flex items-center gap-1 text-sm cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name={field.id}
+                                        value={opt}
+                                        checked={field.value === opt}
+                                        onChange={handleChange}
+                                        className="accent-fuchsia-500"
+                                    />
+                                    {opt}
+                                </label>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Delete only for custom fields */}
-            {/* {isCustomField && (
-                <button
-                    type="button"
-                    onClick={() => onRemoveCustomField(field.id)}
-                    className="p-2 mt-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 transition duration-150 self-start"
-                    title="Remove Custom Field"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" /><path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" /></svg>
-                </button>
-            )} */}
         </div>
     );
 });
-
 
 FieldInput.displayName = 'FieldInput';
 
@@ -901,6 +995,16 @@ const BiodataGenerator: React.FC = () => {
         }
     }, [fields]);
 
+    const handleTemplateMetaChange = useCallback(
+        (field: 'dietyText' | 'templateHeading', value: string) => {
+            if (field === 'dietyText') {
+                setDietyText(value);
+            } else if (field === 'templateHeading') {
+                setTemplateHeading(value);
+            }
+        },
+        []
+    );
 
     const handleFieldChange = useCallback((id: string, value: string) => {
         setFields(prevFields =>
@@ -945,38 +1049,7 @@ const BiodataGenerator: React.FC = () => {
     /**
      * Adds a new custom field to the specified group and ensures it is inserted 
      * immediately after the last field currently visible in the current step.
-     */
-    const addCustomField = (groupType: 'personal' | 'family' | 'custom') => {
-        const newId = `custom-${groupType}-${Date.now()}`;
-
-        let targetGroupId: FieldGroupId;
-        if (groupType === 'personal') targetGroupId = 'custom-personal';
-        else if (groupType === 'family') targetGroupId = 'custom-family';
-        else targetGroupId = 'custom';
-
-        const newField: BiodataField = {
-            id: newId,
-            label: 'New Custom Detail',
-            value: '',
-            type: 'custom',
-            groupId: targetGroupId,
-        };
-
-        setFields(prevFields => {
-            const currentStepIds = getCurrentStepFieldIds(step);
-            const lastVisibleId = currentStepIds[currentStepIds.length - 1];
-            const lastVisibleIndex = prevFields.findIndex(f => f.id === lastVisibleId);
-
-            const newFields = [...prevFields];
-
-            const insertIndex = (lastVisibleIndex !== -1) ? lastVisibleIndex + 1 : prevFields.length;
-            newFields.splice(insertIndex, 0, newField);
-
-            return newFields;
-        });
-
-        setLastAddedFieldId(newId);
-    };
+    */
 
     const removeCustomField = useCallback((id: string) => {
         setFields(prevFields => prevFields.filter(field => field.id !== id));
@@ -996,7 +1069,6 @@ const BiodataGenerator: React.FC = () => {
             loadImage(tempUrl, setter);
         }
     };
-
 
     /**
      * Generates and downloads the biodata as a multi-page PDF using the pre-calculated page data.
@@ -1157,8 +1229,10 @@ const BiodataGenerator: React.FC = () => {
                     id: `custom-${Date.now()}`,
                     label: 'New Custom Field',
                     value: '',
-                    type: 'text' as FieldType, // ✅ ensures correct typing
-                    groupId: afterField.groupId, // ✅ required field
+                    type: 'custom', // custom field type
+                    groupId: groupType === 'custom' ? 'custom' : afterField.groupId,
+                    inputType: 'text', // default input type for custom fields
+                    options: [],       // empty by default
                 };
 
                 const updatedFields = [...prevFields];
@@ -1309,7 +1383,7 @@ const BiodataGenerator: React.FC = () => {
                                     <input
                                         type="text"
                                         value={dietyText}
-                                        onChange={(e) => setDietyText(e.target.value)}
+                                        onChange={(e) => handleTemplateMetaChange('dietyText', e.target.value)}
                                         placeholder="Enter diety name or text"
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
                                     />
@@ -1322,11 +1396,12 @@ const BiodataGenerator: React.FC = () => {
                                     <input
                                         type="text"
                                         value={templateHeading}
-                                        onChange={(e) => setTemplateHeading(e.target.value)}
+                                        onChange={(e) => handleTemplateMetaChange('templateHeading', e.target.value)}
                                         placeholder="Enter heading for the template"
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
                                     />
                                 </div>
+
                             </div>
                         </div>
                     </>
