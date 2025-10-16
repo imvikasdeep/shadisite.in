@@ -51,8 +51,8 @@ const VALUE_COL_OFFSET = PADDING + 160;
 const VALUE_COL_WIDTH = CANVAS_WIDTH - VALUE_COL_OFFSET - PADDING;
 
 // Placeholder image URLs
-const PLACEHOLDER_PHOTO_URL = "https://placehold.co/120x160/cccccc/333333?text=User+Photo";
-const PLACEHOLDER_LOGO_URL = "./images/layouts/ganesh-intro.png";
+// const PLACEHOLDER_PHOTO_URL = "https://placehold.co/120x160/cccccc/333333?text=User+Photo";
+// const PLACEHOLDER_LOGO_URL = "./images/layouts/ganesh-intro.png";
 
 
 // --- INTERFACES & TYPES ---
@@ -81,6 +81,7 @@ interface Template {
 
 interface ImageState {
     url: string;
+    border_radius: string;
     object: HTMLImageElement | null;
 }
 
@@ -545,33 +546,69 @@ const drawContentForPage = (
         const photoX = width - PADDING - photoWidth;
         const photoY = spacingFromTop;
 
-        ctx.fillStyle = template.primaryColor;
-        ctx.fillRect(photoX, photoY, photoWidth, photoHeight);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
-
+        // === Draw Photo with Border Radius ===
         if (photo.object) {
-            ctx.drawImage(photo.object, photoX + 2, photoY + 2, photoWidth - 4, photoHeight - 4);
+            const radius = Math.min(
+                Math.max(parseInt(photo.border_radius || '0', 10), 0),
+                Math.min(photoWidth, photoHeight) / 2
+            );
+
+            const x = photoX;
+            const y = photoY;
+            const w = photoWidth;
+            const h = photoHeight;
+
+            const drawRoundedRectPath = (
+                ctx: CanvasRenderingContext2D,
+                x: number,
+                y: number,
+                w: number,
+                h: number,
+                r: number
+            ) => {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            };
+
+            ctx.save();
+            drawRoundedRectPath(ctx, x, y, w, h, radius);
+            ctx.clip();
+
+            ctx.drawImage(photo.object, x, y, w, h);
+            ctx.restore();
+
+            // Optional subtle border (enable if desired)
+            // ctx.lineWidth = 1;
+            // ctx.strokeStyle = template.primaryColor;
+            // drawRoundedRectPath(ctx, x, y, w, h, radius);
+            // ctx.stroke();
         }
 
         // --- Diety Text (Below Logo) ---
         ctx.font = `bold ${FONT_SIZE + 4}px Pacifico, cursive`;
         ctx.fillStyle = template.primaryColor;
 
-        // Added a bit more space below logo (was logoHeight + spacingBetweenHeaderItems)
         const dietyTextY = logoY + logoHeight + spacingBetweenHeaderItems + 6;
         ctx.fillText(dietyText, logoX, dietyTextY);
 
         // --- Template Heading (Below Diety Text) ---
-        // Added extra space below dietyText and increased font size
-        const headingFontSize = FONT_SIZE + 15; // was +6 before
+        const headingFontSize = FONT_SIZE + 15;
         ctx.font = `bold ${headingFontSize}px Inter, sans-serif`;
         ctx.fillStyle = '#1f2937';
-        const headingY = dietyTextY + FONT_SIZE + 20; // increased spacing below diety text
+        const headingY = dietyTextY + FONT_SIZE + 20;
         ctx.fillText(templateHeading, logoX, headingY);
 
         // --- Start content area below heading ---
-        currentY = headingY + headingFontSize + 24; // slightly more space before fields
+        currentY = headingY + headingFontSize + 24;
     } else {
         // For next pages, start near top
         currentY = PADDING + FIELD_GAP;
@@ -591,7 +628,6 @@ const drawContentForPage = (
     pageFields.forEach((field) => {
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
 
-        // ✅ Skip if value is empty
         if (!field.value || field.value.trim() === '') return;
 
         // === Section Heading ===
@@ -871,7 +907,7 @@ const BiodataGenerator: React.FC = () => {
     const [selectedLogo, setLogo] = useState<string>(deityLogos[0]);
     const [dietyText, setDietyText] = useState<string>('');
     const [templateHeading, setTemplateHeading] = useState<string>('');
-    const [photo, setPhoto] = useState<ImageState>({ url: PLACEHOLDER_PHOTO_URL, object: null });
+    const [photo, setPhoto] = useState<ImageState>({ url: '', border_radius: '', object: null });
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
     const [step, setStep] = useState(1);
@@ -945,19 +981,18 @@ const BiodataGenerator: React.FC = () => {
 
     // Load initial placeholder images on mount
     const loadImage = useCallback((src: string, setter: React.Dispatch<React.SetStateAction<ImageState>>) => {
-        const img = new Image();
+        const img = new (window as any).Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => setter({ url: src, object: img });
-        img.onerror = () => setter({ url: src, object: null });
+        img.onload = () => setter({ url: src, border_radius: '', object: img });
+        img.onerror = () => setter({ url: src, border_radius: '', object: null });
         img.src = src;
     }, []);
 
     useEffect(() => {
-        // loadImage(PLACEHOLDER_LOGO_URL, setLogo);
-        loadImage(PLACEHOLDER_PHOTO_URL, setPhoto);
+        loadImage('', setPhoto);
         templates.forEach(t => {
             if (t.bgImageUrl) {
-                new Image().src = t.bgImageUrl;
+                new (window as any).Image().src = t.bgImageUrl;
             }
         });
     }, [loadImage]);
@@ -1098,7 +1133,7 @@ const BiodataGenerator: React.FC = () => {
             ctx.scale(DPI_SCALE, DPI_SCALE);
 
             // Preload background image
-            const bgImage = new Image();
+            const bgImage = new (window as any).Image();
             bgImage.crossOrigin = 'anonymous';
             bgImage.src = selectedTemplate.bgImageUrl;
 
@@ -1174,7 +1209,7 @@ const BiodataGenerator: React.FC = () => {
         currentUrl: string;
     }
 
-    const ImageUpload: React.FC<ImageUploadProps> = ({ label, imageType, onUpload, currentUrl }) => (
+    const ImageUpload: React.FC<ImageUploadProps> = ({ label, imageType, onUpload }) => (
         <div className="w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <div className="flex items-center space-x-3">
@@ -1186,7 +1221,7 @@ const BiodataGenerator: React.FC = () => {
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.onerror = null;
-                            target.src = imageType === 'logo' ? PLACEHOLDER_LOGO_URL : PLACEHOLDER_PHOTO_URL;
+                            target.src = '';
                         }}
                     />
                 </div>
@@ -1351,23 +1386,25 @@ const BiodataGenerator: React.FC = () => {
 
                         <div className="space-y-4 mb-8">
                             <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
-                                Select Diety Logo
+                                Select Diety Logo <span className='text-xs'>(Click to select/deslect)</span>
                             </h3>
 
-                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-4">
                                 {deityLogos.map((logo, index) => (
                                     <div
                                         key={`${logo}-${index}`}
-                                        onClick={() => setLogo(logo)}
+                                        onClick={() =>
+                                            setLogo((prev) => (prev === logo ? '' : logo)) // 👈 toggle on click
+                                        }
                                         className={`p-1 w-[80px] h-[80px] border-2 rounded-lg cursor-pointer transition duration-200 shadow-md ${selectedLogo === logo
-                                            ? `${primaryBorderClass} ${primaryBgClass} ring-4 ${primaryRingClass}`
-                                            : 'border-gray-200 hover:border-fuchsia-400'
+                                                ? `${primaryBorderClass} ${primaryBgClass} ring-4 ${primaryRingClass}`
+                                                : 'border-gray-200 hover:border-fuchsia-400'
                                             }`}
                                     >
                                         <img
                                             src={logo}
                                             alt="logo"
-                                            className="h-[100%] w-100 object-contain"
+                                            className="h-full w-full object-contain"
                                         />
                                     </div>
                                 ))}
@@ -1382,7 +1419,9 @@ const BiodataGenerator: React.FC = () => {
                                     <input
                                         type="text"
                                         value={dietyText}
-                                        onChange={(e) => handleTemplateMetaChange('dietyText', e.target.value)}
+                                        onChange={(e) =>
+                                            handleTemplateMetaChange('dietyText', e.target.value)
+                                        }
                                         placeholder="Enter diety name or text"
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
                                     />
@@ -1395,14 +1434,16 @@ const BiodataGenerator: React.FC = () => {
                                     <input
                                         type="text"
                                         value={templateHeading}
-                                        onChange={(e) => handleTemplateMetaChange('templateHeading', e.target.value)}
+                                        onChange={(e) =>
+                                            handleTemplateMetaChange('templateHeading', e.target.value)
+                                        }
                                         placeholder="Enter heading for the template"
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
                                     />
                                 </div>
-
                             </div>
                         </div>
+
                     </>
                 );
 
@@ -1422,14 +1463,47 @@ const BiodataGenerator: React.FC = () => {
                         </h2>
                         <p className="text-gray-600 mb-6">{stepSubtitle}</p>
 
-                        <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 mb-6">
-                            <ImageUpload
-                                label=""
-                                imageType="photo"
-                                onUpload={handleImageUpload}
-                                currentUrl={photo.url}
-                            />
+                        <div className="flex flex-col md:flex-row items-start gap-6 p-4 border-b-2 border-fuchsia-50 hover:bg-fuchsia-50 rounded-xl transition duration-200">
+                            {/* Upload Photo */}
+                            <div className="w-full md:w-2/5 mb-2 md:mb-0">
+                                <label className="block font-medium text-gray-700 mb-2">
+                                    Upload Photo
+                                </label>
+                                <div className="w-full">
+                                    <ImageUpload
+                                        label=""
+                                        imageType="photo"
+                                        onUpload={handleImageUpload}
+                                        currentUrl={photo.url}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Border Radius Input */}
+                            <div className="w-full md:w-3/5">
+                                <label className="block font-medium text-gray-700 mb-2">
+                                    Photo Curve
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="50"
+                                    value={photo.border_radius || 0}
+                                    onChange={(e) =>
+                                        setPhoto((prev) => ({
+                                            ...prev,
+                                            border_radius: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="e.g. 10 for rounded corners"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Enter a value between 0–50 (0 = square, 50 = circle).
+                                </p>
+                            </div>
                         </div>
+
 
                         <div
                             ref={scrollRef}
@@ -1494,6 +1568,53 @@ const BiodataGenerator: React.FC = () => {
                 );
 
             case 4:
+                interface BiodataField {
+                    label: string;
+                    value: string;
+                    type: 'mandatory' | 'custom';
+                    groupId: 'personal' | 'family' | 'contact' | string;
+                }
+
+                interface BiodataTemplate {
+                    id: string;
+                    bgImageUrl: string;
+                    primaryColor: string;
+                }
+
+                interface BiodataForm {
+                    fields: BiodataField[];
+                    photo: string;
+                    selectedTemplate: BiodataTemplate;
+                    selectedLogo: string;
+                    dietyText: string;
+                    templateHeading: string;
+                    timestamp: string;
+                }
+                const handleShowData = (): void => {
+                    const biodataForm: BiodataForm = {
+                        fields: fields.map(f => ({
+                            label: f.label,
+                            value: f.value,
+                            type: f.type,
+                            groupId: f.groupId,
+                        })),
+                        photo: typeof photo === 'string' ? photo : photo?.url || '',
+                        selectedTemplate: selectedTemplate
+                            ? {
+                                id: selectedTemplate.id,
+                                bgImageUrl: selectedTemplate.bgImageUrl,
+                                primaryColor: selectedTemplate.primaryColor,
+                            }
+                            : { id: '', bgImageUrl: '', primaryColor: '' },
+                        selectedLogo: selectedLogo || '',
+                        dietyText: dietyText || '',
+                        templateHeading: templateHeading || '',
+                        timestamp: new Date().toISOString(),
+                    };
+
+                    console.log('🧾 ssBiodata Form:', biodataForm);
+                };
+
                 return (
                     <>
                         <h2 className="text-2xl font-bold mb-4 text-black">
@@ -1568,6 +1689,13 @@ const BiodataGenerator: React.FC = () => {
                         {/* Download Section */}
                         <div className="mt-8 pt-4 border-t border-gray-200">
                             <h3 className="text-xl font-semibold mb-4 text-gray-700">Download</h3>
+                            <button
+                                type="button"
+                                onClick={handleShowData}
+                                className="mb-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition duration-200"
+                            >
+                                Show Data in Console
+                            </button>
                             <button
                                 onClick={generatePdf}
                                 disabled={isGenerating || !isLibrariesLoaded}
