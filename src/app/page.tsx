@@ -29,7 +29,7 @@ const CANVAS_WIDTH = 500;
 // A4 aspect ratio is 1:1.414. 500 * 1.414 = 707 (approx)
 const CANVAS_HEIGHT = 707;
 const DPI_SCALE = 2; // High DPI for crisp canvas rendering
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 // A4 Proportion-Matched Metrics: ADJUSTED FOR HIGH DENSITY VISUAL FIT
 const PADDING = 60;
@@ -502,17 +502,18 @@ const drawContentForPage = (
     ctx: CanvasRenderingContext2D,
     pageFields: BiodataField[],
     template: Template,
-    logo: string, // static image URL or base64
+    logo: string,
     dietyText: string,
     templateHeading: string,
     photo: ImageState,
     pageNumber: number = 1,
-    prevPageEndGroup: CanonicalGroupId | null = null
+    prevPageEndGroup: CanonicalGroupId | null = null,
+    customization: CustomizationSettings
 ) => {
     const width = CANVAS_WIDTH;
     let currentY: number;
 
-    // === Create and draw logo (static URL) ===
+    // --- Load Logo ---
     let logoImg: HTMLImageElement | null = null;
     if (logo) {
         logoImg = new Image();
@@ -520,43 +521,31 @@ const drawContentForPage = (
     }
 
     if (pageNumber === 1) {
-        // --- Header Elements ---
         const logoWidth = 80;
         const logoHeight = 80;
-
         const photoWidth = 110;
         const photoHeight = 140;
-
         const spacingFromTop = PADDING;
         const spacingBetweenHeaderItems = 10;
 
-        // --- Logo (Top Left) ---
         const logoX = PADDING;
         const logoY = spacingFromTop;
 
         if (logoImg && logoImg.complete) {
             ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
         } else if (logoImg) {
-            logoImg.onload = () => {
-                ctx.drawImage(logoImg!, logoX, logoY, logoWidth, logoHeight);
-            };
+            logoImg.onload = () => ctx.drawImage(logoImg!, logoX, logoY, logoWidth, logoHeight);
         }
 
-        // --- Photo (Top Right) ---
+        // --- Draw Photo ---
         const photoX = width - PADDING - photoWidth;
         const photoY = spacingFromTop;
 
-        // === Draw Photo with Border Radius ===
         if (photo.object) {
             const radius = Math.min(
                 Math.max(parseInt(photo.border_radius || '0', 10), 0),
                 Math.min(photoWidth, photoHeight) / 2
             );
-
-            const x = photoX;
-            const y = photoY;
-            const w = photoWidth;
-            const h = photoHeight;
 
             const drawRoundedRectPath = (
                 ctx: CanvasRenderingContext2D,
@@ -580,37 +569,26 @@ const drawContentForPage = (
             };
 
             ctx.save();
-            drawRoundedRectPath(ctx, x, y, w, h, radius);
+            drawRoundedRectPath(ctx, photoX, photoY, photoWidth, photoHeight, radius);
             ctx.clip();
-
-            ctx.drawImage(photo.object, x, y, w, h);
+            ctx.drawImage(photo.object, photoX, photoY, photoWidth, photoHeight);
             ctx.restore();
-
-            // Optional subtle border (enable if desired)
-            // ctx.lineWidth = 1;
-            // ctx.strokeStyle = template.primaryColor;
-            // drawRoundedRectPath(ctx, x, y, w, h, radius);
-            // ctx.stroke();
         }
 
-        // --- Diety Text (Below Logo) ---
-        ctx.font = `bold ${FONT_SIZE + 4}px Pacifico, cursive`;
-        ctx.fillStyle = template.primaryColor;
-
+        // --- Diety Text (Body Customization) ---
+        ctx.font = `bold ${customization.bodyFontSize}px ${customization.bodyFontFamily}`;
+        ctx.fillStyle = customization.bodyTextColor || template.primaryColor;
         const dietyTextY = logoY + logoHeight + spacingBetweenHeaderItems + 6;
         ctx.fillText(dietyText, logoX, dietyTextY);
 
-        // --- Template Heading (Below Diety Text) ---
-        const headingFontSize = FONT_SIZE + 15;
-        ctx.font = `bold ${headingFontSize}px Inter, sans-serif`;
-        ctx.fillStyle = '#1f2937';
-        const headingY = dietyTextY + FONT_SIZE + 20;
+        // --- Template Heading (Heading Customization) ---
+        ctx.font = `bold 25px`;
+        ctx.fillStyle = customization.headingTextColor || '#1f2937';
+        const headingY = dietyTextY + customization.bodyFontSize + 20;
         ctx.fillText(templateHeading, logoX, headingY);
 
-        // --- Start content area below heading ---
-        currentY = headingY + headingFontSize + 24;
+        currentY = headingY + customization.headingFontSize + 24;
     } else {
-        // For next pages, start near top
         currentY = PADDING + FIELD_GAP;
     }
 
@@ -621,9 +599,7 @@ const drawContentForPage = (
     const valueWidth = VALUE_COL_WIDTH;
 
     let lastCanonicalGroupId: CanonicalGroupId | null =
-        pageNumber === 1
-            ? ('none' as CanonicalGroupId)
-            : prevPageEndGroup || ('none' as CanonicalGroupId);
+        pageNumber === 1 ? ('none' as CanonicalGroupId) : prevPageEndGroup || ('none' as CanonicalGroupId);
 
     pageFields.forEach((field) => {
         const currentCanonicalGroupId = getCanonicalGroupId(field.groupId);
@@ -635,31 +611,31 @@ const drawContentForPage = (
             const headingText = GROUP_TITLES[currentCanonicalGroupId];
             if (headingText) {
                 currentY += 20;
-                ctx.font = `${HEADING_FONT_SIZE + 2}px Pacifico, cursive`;
-                ctx.fillStyle = template.primaryColor;
+                ctx.font = `bold ${customization.headingFontSize}px ${customization.headingFontFamily}`;
+                ctx.fillStyle = customization.headingTextColor || template.primaryColor;
                 ctx.fillText(headingText, PADDING + 0.3, currentY + 0.3);
                 ctx.fillText(headingText, PADDING, currentY);
 
-                const headingFontSize = HEADING_FONT_SIZE + 2;
-                currentY += headingFontSize + 16;
+                currentY += customization.headingFontSize + 16;
             }
             lastCanonicalGroupId = currentCanonicalGroupId;
         }
 
         // === Label ===
-        ctx.font = `bold ${FONT_SIZE}px Inter, sans-serif`;
+        ctx.font = `bold ${customization.bodyFontSize}px ${customization.bodyFontFamily}`;
         ctx.fillStyle = template.primaryColor;
         const labelMaxWidth = VALUE_COL_OFFSET - PADDING - 10;
         wrapTextAndGetLastY(ctx, field.label, labelX, currentY, labelMaxWidth, LINE_HEIGHT);
 
         // === Value ===
-        ctx.font = `${FONT_SIZE}px Inter, sans-serif`;
-        ctx.fillStyle = '#1f2937';
+        ctx.font = `${customization.bodyFontSize}px ${customization.bodyFontFamily}`;
+        ctx.fillStyle = customization.bodyTextColor || '#1f2937';
         const bottomY = wrapTextAndGetLastY(ctx, ': ' + field.value, valueX, currentY, valueWidth, LINE_HEIGHT);
 
         currentY = bottomY + FIELD_GAP;
     });
 };
+
 
 // --- Sub-Component: The Biodata Preview (The Canvas) ---
 
@@ -673,9 +649,10 @@ interface BiodataPreviewProps {
     pageNumber: number;
     // NEW: Passed down to control heading drawing
     prevPageEndGroup: CanonicalGroupId | null;
+    customization: CustomizationSettings;
 }
 
-const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, dietyText, templateHeading, photo, pageNumber, prevPageEndGroup }, ref) => {
+const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(({ pageContent, template, logo, dietyText, templateHeading, photo, pageNumber, prevPageEndGroup, customization }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const setRefs = useCallback((node: HTMLCanvasElement | null) => {
@@ -720,7 +697,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
                     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 }
 
-                drawContentForPage(ctx, pageContent.fields, template, logo, dietyText, templateHeading, photo, pageNumber, prevPageEndGroup);
+                drawContentForPage(ctx, pageContent.fields, template, logo, dietyText, templateHeading, photo, pageNumber, prevPageEndGroup, customization);
             }
 
             if (bgImg.complete) {
@@ -733,7 +710,7 @@ const BiodataPreview = React.forwardRef<HTMLCanvasElement, BiodataPreviewProps>(
 
         drawBackgroundAndContent();
 
-    }, [pageContent, template, photo.object, pageNumber, prevPageEndGroup, logo, photo, dietyText, templateHeading]);
+    }, [pageContent, template, photo.object, pageNumber, prevPageEndGroup, logo, photo, dietyText, templateHeading, customization]);
 
 
     return (
@@ -897,6 +874,19 @@ const FieldInput: React.FC<FieldInputProps> = React.memo(({
 
 FieldInput.displayName = 'FieldInput';
 
+interface CustomizationSettings {
+    // Body Text
+    bodyFontFamily: string;
+    bodyTextColor: string;
+    bodyFontSize: number;
+    bodyFontWeight: number;
+
+    // Headings
+    headingFontFamily: string;
+    headingTextColor: string;
+    headingFontSize: number;
+    headingFontWeight: number;
+}
 
 // --- Main Application Component ---
 
@@ -912,6 +902,27 @@ const BiodataGenerator: React.FC = () => {
     const [generationStatus, setGenerationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
     const [step, setStep] = useState(1);
     const [highestStepVisited, setHighestStepVisited] = useState(1);
+    const [customization, setCustomization] = useState<CustomizationSettings>({
+        bodyFontFamily: 'Arial',
+        bodyTextColor: '#000000',
+        bodyFontSize: 14,
+        bodyFontWeight: 400,
+
+        headingFontFamily: 'Arial',
+        headingTextColor: '#000000',
+        headingFontSize: 18,
+        headingFontWeight: 700,
+    });
+
+    const handleCustomizationChange = useCallback(
+        (field: keyof typeof customization, value: string | number) => {
+            setCustomization(prev => ({
+                ...prev,
+                [field]: value,
+            }));
+        },
+        []
+    );
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const [lastAddedFieldId, setLastAddedFieldId] = useState<string | null>(null);
@@ -1175,7 +1186,8 @@ const BiodataGenerator: React.FC = () => {
                     templateHeading,
                     photo,
                     pageNum,
-                    pageInfo.prevPageEndGroup
+                    pageInfo.prevPageEndGroup,
+                    customization
                 );
 
                 // 3. Add page to PDF
@@ -1209,21 +1221,23 @@ const BiodataGenerator: React.FC = () => {
         currentUrl: string;
     }
 
-    const ImageUpload: React.FC<ImageUploadProps> = ({ label, imageType, onUpload }) => (
+    const ImageUpload: React.FC<ImageUploadProps> = ({ label, imageType, onUpload, currentUrl }) => (
         <div className="w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0 h-16 w-16 bg-gray-200 rounded-lg overflow-hidden border">
-                    <img
-                        src={currentUrl}
-                        alt={label}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null;
-                            target.src = '';
-                        }}
-                    />
+                    {currentUrl && (
+                        <img
+                            src={currentUrl}
+                            alt={label}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = '';
+                            }}
+                        />
+                    )}
                 </div>
                 <label className="flex-1 cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-lg shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 transition duration-150">
                     Choose File
@@ -1397,8 +1411,8 @@ const BiodataGenerator: React.FC = () => {
                                             setLogo((prev) => (prev === logo ? '' : logo)) // 👈 toggle on click
                                         }
                                         className={`p-1 w-[80px] h-[80px] border-2 rounded-lg cursor-pointer transition duration-200 shadow-md ${selectedLogo === logo
-                                                ? `${primaryBorderClass} ${primaryBgClass} ring-4 ${primaryRingClass}`
-                                                : 'border-gray-200 hover:border-fuchsia-400'
+                                            ? `${primaryBorderClass} ${primaryBgClass} ring-4 ${primaryRingClass}`
+                                            : 'border-gray-200 hover:border-fuchsia-400'
                                             }`}
                                     >
                                         <img
@@ -1446,7 +1460,6 @@ const BiodataGenerator: React.FC = () => {
 
                     </>
                 );
-
             case 2:
             case 3:
                 const stepTitle = step === 2 ? 'Personal Info' : 'Family Info';
@@ -1566,7 +1579,6 @@ const BiodataGenerator: React.FC = () => {
                         </div>
                     </>
                 );
-
             case 4:
                 interface BiodataField {
                     label: string;
@@ -1733,13 +1745,142 @@ const BiodataGenerator: React.FC = () => {
                     </>
 
                 );
+            case 5:
+                {
+                    return (
+                        <div className="space-y-6 p-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Customization</h2>
+
+                            {/* Body Text Customization */}
+                            <div className="p-4 border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <h3 className="text-xl font-semibold text-gray-700 mb-4">Body Text</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {/* Font Family */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Font Family</label>
+                                        <select
+                                            value={customization.bodyFontFamily}
+                                            onChange={e => handleCustomizationChange('bodyFontFamily', e.target.value)}
+                                            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                        >
+                                            <option value="Arial">Arial</option>
+                                            <option value="Helvetica">Helvetica</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Verdana">Verdana</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Text Color */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Text Color</label>
+                                        <input
+                                            type="color"
+                                            value={customization.bodyTextColor}
+                                            onChange={e => handleCustomizationChange('bodyTextColor', e.target.value)}
+                                            className="w-full h-10 border rounded cursor-pointer"
+                                        />
+                                    </div>
+
+                                    {/* Font Size */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Font Size</label>
+                                        <input
+                                            type="number"
+                                            min={8}
+                                            max={72}
+                                            value={customization.bodyFontSize}
+                                            onChange={e => handleCustomizationChange('bodyFontSize', parseInt(e.target.value))}
+                                            className="w-full border rounded px-3 py-2"
+                                        />
+                                    </div>
+
+                                    {/* Font Weight */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Font Weight</label>
+                                        <select
+                                            value={customization.bodyFontWeight}
+                                            onChange={e => handleCustomizationChange('bodyFontWeight', parseInt(e.target.value))}
+                                            className="w-full border rounded px-3 py-2"
+                                        >
+                                            {[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => (
+                                                <option key={w} value={w}>{w}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Heading Customization */}
+                            <div className="p-4 border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <h3 className="text-xl font-semibold text-gray-700 mb-4">Headings</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {/* Font Family */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Font Family</label>
+                                        <select
+                                            value={customization.headingFontFamily}
+                                            onChange={e => handleCustomizationChange('headingFontFamily', e.target.value)}
+                                            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                        >
+                                            <option value="Arial">Arial</option>
+                                            <option value="Helvetica">Helvetica</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Verdana">Verdana</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Text Color */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Text Color</label>
+                                        <input
+                                            type="color"
+                                            value={customization.headingTextColor}
+                                            onChange={e => handleCustomizationChange('headingTextColor', e.target.value)}
+                                            className="w-full h-10 border rounded cursor-pointer"
+                                        />
+                                    </div>
+
+                                    {/* Font Size */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Font Size</label>
+                                        <input
+                                            type="number"
+                                            min={8}
+                                            max={100}
+                                            value={customization.headingFontSize}
+                                            onChange={e => handleCustomizationChange('headingFontSize', parseInt(e.target.value))}
+                                            className="w-full border rounded px-3 py-2"
+                                        />
+                                    </div>
+
+                                    {/* Font Weight */}
+                                    <div>
+                                        <label className="block mb-1 font-medium">Font Weight</label>
+                                        <select
+                                            value={customization.headingFontWeight}
+                                            onChange={e => handleCustomizationChange('headingFontWeight', parseInt(e.target.value))}
+                                            className="w-full border rounded px-3 py-2"
+                                        >
+                                            {[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => (
+                                                <option key={w} value={w}>{w}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    )
+                }
 
             default:
                 return <p className="text-gray-500">Select a step to begin.</p>;
         }
     };
 
-    const STEP_LABELS = ['Template', 'Personal Info', 'Family Info', 'Contact'];
+    const STEP_LABELS = ['Template', 'Personal Info', 'Family Info', 'Contact', 'Customisation'];
 
 
     // --- Main Render ---
@@ -1750,7 +1891,7 @@ const BiodataGenerator: React.FC = () => {
                 {/* Left Column: Wizard Controls and Steps (60%) */}
                 <div className="lg:col-span-3 bg-white p-6 rounded-xl h-fit order-2 lg:order-1">
                     <div className="flex justify-between items-center mb-8 space-x-2">
-                        {[1, 2, 3, 4].map((s) => {
+                        {[1, 2, 3, 4, 5].map((s) => {
                             const isCompleted = s < step;
                             const isCurrent = s === step;
                             const isVisited = s <= highestStepVisited;
@@ -1858,6 +1999,7 @@ const BiodataGenerator: React.FC = () => {
                                 photo={photo}
                                 pageNumber={currentPageIndex + 1}
                                 prevPageEndGroup={prevGroup}
+                                customization={customization}
                             />
                         </div>
                     </div>
