@@ -1592,15 +1592,32 @@ const BiodataGenerator: React.FC = () => {
                     bgImageUrl: string;
                     primaryColor: string;
                 }
+                interface CustomizationSettings {
+                    // Body Text
+                    bodyFontFamily: string;
+                    bodyTextColor: string;
+                    bodyFontSize: number;
+                    bodyFontWeight: number;
+
+                    // Headings
+                    headingFontFamily: string;
+                    headingTextColor: string;
+                    headingFontSize: number;
+                    headingFontWeight: number;
+                }
 
                 interface BiodataForm {
                     fields: BiodataField[];
-                    photo: string;
+                    photo: {
+                        url: string;
+                        border_radius: string;
+                    };
                     selectedTemplate: BiodataTemplate;
                     selectedLogo: string;
                     dietyText: string;
                     templateHeading: string;
                     timestamp: string;
+                    CustomizationSettings: CustomizationSettings
                 }
                 const handleShowData = (): void => {
                     const biodataForm: BiodataForm = {
@@ -1610,7 +1627,10 @@ const BiodataGenerator: React.FC = () => {
                             type: f.type,
                             groupId: f.groupId,
                         })),
-                        photo: typeof photo === 'string' ? photo : photo?.url || '',
+                        photo: {
+                            url: typeof photo === 'string' ? photo : photo?.url || '',
+                            border_radius: photo?.border_radius?.toString() || '0',
+                        },
                         selectedTemplate: selectedTemplate
                             ? {
                                 id: selectedTemplate.id,
@@ -1622,10 +1642,21 @@ const BiodataGenerator: React.FC = () => {
                         dietyText: dietyText || '',
                         templateHeading: templateHeading || '',
                         timestamp: new Date().toISOString(),
+                        CustomizationSettings: {
+                            bodyFontFamily: customization.bodyFontFamily,
+                            bodyTextColor: customization.bodyTextColor,
+                            bodyFontSize: customization.bodyFontSize,
+                            bodyFontWeight: customization.bodyFontWeight,
+                            headingFontFamily: customization.headingFontFamily,
+                            headingTextColor: customization.headingTextColor,
+                            headingFontSize: customization.headingFontSize,
+                            headingFontWeight: customization.headingFontWeight,
+                        },
                     };
 
-                    console.log('🧾 ssBiodata Form:', biodataForm);
+                    console.log('🧾 Biodata Form:', biodataForm);
                 };
+
 
                 return (
                     <>
@@ -1752,16 +1783,24 @@ const BiodataGenerator: React.FC = () => {
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Customization</h2>
 
                             {/* Body Text Customization */}
-                            <div className="p-4 border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-                                <h3 className="text-xl font-semibold text-gray-700 mb-4">Body Text</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="p-6 bg-white border border-fuchsia-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-semibold text-black tracking-tight">
+                                        Body Text
+                                    </h3>
+                                    <span className="text-sm text-gray-400 italic">Customize your text style</span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {/* Font Family */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Font Family</label>
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Font Family
+                                        </label>
                                         <select
                                             value={customization.bodyFontFamily}
                                             onChange={e => handleCustomizationChange('bodyFontFamily', e.target.value)}
-                                            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 focus:outline-none bg-gray-50 hover:bg-white transition"
                                         >
                                             <option value="Arial">Arial</option>
                                             <option value="Helvetica">Helvetica</option>
@@ -1772,39 +1811,50 @@ const BiodataGenerator: React.FC = () => {
                                     </div>
 
                                     {/* Text Color */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Text Color</label>
-                                        <input
-                                            type="color"
-                                            value={customization.bodyTextColor}
-                                            onChange={e => handleCustomizationChange('bodyTextColor', e.target.value)}
-                                            className="w-full h-10 border rounded cursor-pointer"
-                                        />
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Text Color
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="color"
+                                                value={customization.bodyTextColor}
+                                                onChange={e => handleCustomizationChange('bodyTextColor', e.target.value)}
+                                                className="h-10 w-16 border border-gray-200 rounded-lg cursor-pointer bg-white"
+                                            />
+                                            <span className="text-sm text-gray-500">{customization.bodyTextColor}</span>
+                                        </div>
                                     </div>
 
                                     {/* Font Size */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Font Size</label>
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Font Size <span className="text-gray-400">(px)</span>
+                                        </label>
                                         <input
                                             type="number"
                                             min={8}
                                             max={72}
                                             value={customization.bodyFontSize}
                                             onChange={e => handleCustomizationChange('bodyFontSize', parseInt(e.target.value))}
-                                            className="w-full border rounded px-3 py-2"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 focus:outline-none bg-gray-50 hover:bg-white transition"
                                         />
                                     </div>
 
                                     {/* Font Weight */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Font Weight</label>
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Font Weight
+                                        </label>
                                         <select
                                             value={customization.bodyFontWeight}
                                             onChange={e => handleCustomizationChange('bodyFontWeight', parseInt(e.target.value))}
-                                            className="w-full border rounded px-3 py-2"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 focus:outline-none bg-gray-50 hover:bg-white transition"
                                         >
                                             {[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => (
-                                                <option key={w} value={w}>{w}</option>
+                                                <option key={w} value={w}>
+                                                    {w}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
@@ -1812,16 +1862,24 @@ const BiodataGenerator: React.FC = () => {
                             </div>
 
                             {/* Heading Customization */}
-                            <div className="p-4 border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-                                <h3 className="text-xl font-semibold text-gray-700 mb-4">Headings</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="p-6 bg-white border border-fuchsia-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-semibold text-black tracking-tight">
+                                        Headings
+                                    </h3>
+                                    <span className="text-sm text-gray-400 italic">Customize your heading style</span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {/* Font Family */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Font Family</label>
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Font Family
+                                        </label>
                                         <select
                                             value={customization.headingFontFamily}
                                             onChange={e => handleCustomizationChange('headingFontFamily', e.target.value)}
-                                            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 focus:outline-none bg-gray-50 hover:bg-white transition"
                                         >
                                             <option value="Arial">Arial</option>
                                             <option value="Helvetica">Helvetica</option>
@@ -1832,44 +1890,56 @@ const BiodataGenerator: React.FC = () => {
                                     </div>
 
                                     {/* Text Color */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Text Color</label>
-                                        <input
-                                            type="color"
-                                            value={customization.headingTextColor}
-                                            onChange={e => handleCustomizationChange('headingTextColor', e.target.value)}
-                                            className="w-full h-10 border rounded cursor-pointer"
-                                        />
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Text Color
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="color"
+                                                value={customization.headingTextColor}
+                                                onChange={e => handleCustomizationChange('headingTextColor', e.target.value)}
+                                                className="h-10 w-16 border border-gray-200 rounded-lg cursor-pointer bg-white"
+                                            />
+                                            <span className="text-sm text-gray-500">{customization.headingTextColor}</span>
+                                        </div>
                                     </div>
 
                                     {/* Font Size */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Font Size</label>
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Font Size <span className="text-gray-400">(px)</span>
+                                        </label>
                                         <input
                                             type="number"
                                             min={8}
                                             max={100}
                                             value={customization.headingFontSize}
                                             onChange={e => handleCustomizationChange('headingFontSize', parseInt(e.target.value))}
-                                            className="w-full border rounded px-3 py-2"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 focus:outline-none bg-gray-50 hover:bg-white transition"
                                         />
                                     </div>
 
                                     {/* Font Weight */}
-                                    <div>
-                                        <label className="block mb-1 font-medium">Font Weight</label>
+                                    <div className="flex flex-col">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                            Font Weight
+                                        </label>
                                         <select
                                             value={customization.headingFontWeight}
                                             onChange={e => handleCustomizationChange('headingFontWeight', parseInt(e.target.value))}
-                                            className="w-full border rounded px-3 py-2"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 focus:outline-none bg-gray-50 hover:bg-white transition"
                                         >
                                             {[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => (
-                                                <option key={w} value={w}>{w}</option>
+                                                <option key={w} value={w}>
+                                                    {w}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
 
                     )
