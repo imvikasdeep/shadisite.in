@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(New-Item -ItemType File -Path \"c:\\\\Office\\\\Private\\\\next\\\\shadisite.in\\\\src\\\\app\\\\biodatagenerator\\\\components\\\\BiodataPreview.tsx\" -Force)",
+      "Bash(New-Item -ItemType File -Path \"c:\\\\Office\\\\Private\\\\next\\\\shadisite.in\\\\src\\\\app\\\\biodatagenerator\\\\components\\\\wizard\\\\FieldInput.tsx\" -Force)",
+      "Bash(dir /b \"c:\\\\Office\\\\Private\\\\next\\\\shadisite.in\\\\src\\\\app\\\\biodatagenerator\")",
+      "Bash(test:*)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}
